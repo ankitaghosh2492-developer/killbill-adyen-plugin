@@ -42,7 +42,6 @@ import org.killbill.billing.plugin.adyen.dao.gen.tables.records.AdyenResponsesRe
 import org.killbill.billing.plugin.api.PluginProperties;
 import org.killbill.billing.plugin.api.payment.PluginPaymentTransactionInfoPlugin;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -92,6 +91,20 @@ public class AdyenPaymentTransactionInfoPlugin extends PluginPaymentTransactionI
             .put("25", "T")  // Address matches, name doesn't match => Card member's name does not match, but street address matches
             .put("26", "N")  // Neither postal code, address nor name matches => Street address and postal code do not match
             .build();
+
+    private static final Map<String, String> SUPPORTED_ADDITIONAL_DATA_FIELDS = new ImmutableMap.Builder()
+            .put("avsResult", "avsResult")
+            .put("avsResultRaw", "avsResultCode")
+            .put("cvcResult", "cvcResult")
+            .put("cvcResultRaw", "cvcResultCode")
+            .put(AdyenPaymentPluginApi.PROPERTY_THREEDS_SERVER_TRANS_ID, AdyenPaymentPluginApi.PROPERTY_THREEDS_SERVER_TRANS_ID)
+            .put(AdyenPaymentPluginApi.PROPERTY_THREEDS2_TOKEN, AdyenPaymentPluginApi.PROPERTY_THREEDS2_TOKEN)
+            .put(AdyenPaymentPluginApi.PROPERTY_THREEDS_METHOD_URL, AdyenPaymentPluginApi.PROPERTY_THREEDS_METHOD_URL)
+            .put(AdyenPaymentPluginApi.PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID, AdyenPaymentPluginApi.PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID)
+            .put(AdyenPaymentPluginApi.PROPERTY_ACS_TRANS_ID, AdyenPaymentPluginApi.PROPERTY_ACS_TRANS_ID)
+            .put(AdyenPaymentPluginApi.PROPERTY_RESPONSE_MESSAGE_VERSION, AdyenPaymentPluginApi.PROPERTY_RESPONSE_MESSAGE_VERSION)
+            .build();
+
 
     public AdyenPaymentTransactionInfoPlugin(final UUID kbPaymentId,
                                              final UUID kbTransactionPaymentPaymentId,
@@ -359,23 +372,16 @@ public class AdyenPaymentTransactionInfoPlugin extends PluginPaymentTransactionI
         Map<String, String> additionalData = purchaseResult.getAdditionalData();
 
         if (additionalData != null) {
-            String avsResultRaw = additionalData.get("avsResultRaw");
-            String avsResult = additionalData.get("avsResult");
-            String cvcResultRaw = additionalData.get("cvcResultRaw");
-            String cvcResult = additionalData.get("cvcResult");
-
-            if (avsResultRaw != null) {
-                //use Unknown (UK) as default
-                propertiesMap.put("avsResultCode", CONVERT_AVS_CODE.getOrDefault(avsResultRaw, "UK"));
-            }
-            if (avsResult != null) {
-                propertiesMap.put("avsResult", avsResult);
-            }
-            if (cvcResultRaw != null) {
-                propertiesMap.put("cvcResultCode", cvcResultRaw);
-            }
-            if (cvcResult != null) {
-                propertiesMap.put("cvcResult", cvcResult);
+            for (Map.Entry<String, String> entry: additionalData.entrySet()) {
+                String propName = SUPPORTED_ADDITIONAL_DATA_FIELDS.get(entry.getKey());
+                if (propName != null) {
+                    if ("avsResultCode".equals(propName)) {
+                        //use Unknown (UK) as default
+                        propertiesMap.put(propName, CONVERT_AVS_CODE.getOrDefault(entry.getValue(), "UK"));
+                    } else if (entry.getValue() != null) {
+                        propertiesMap.put(propName, entry.getValue());
+                    }
+                }
             }
         }
 

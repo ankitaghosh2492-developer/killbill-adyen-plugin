@@ -129,12 +129,21 @@ public class AdyenPaymentPluginApi extends PluginPaymentPluginApi<AdyenResponses
     // API
     public static final String PROPERTY_RECURRING_DETAIL_ID = "recurringDetailId";
 
-    // 3-D Secure
+    // Browser info
+    public static final String PROPERTY_USER_AGENT = "userAgent";
+    public static final String PROPERTY_ACCEPT_HEADER = "acceptHeader";
+    public static final String PROPERTY_COLOR_DEPTH = "colorDepth";
+    public static final String PROPERTY_JAVA_ENABLED = "javaEnabled";
+    public static final String PROPERTY_JAVA_SCRIPT_ENABLED = "javaScriptEnabled";
+    public static final String PROPERTY_BROWSER_LANGUAGE = "language";
+    public static final String PROPERTY_SCREEN_HEIGHT = "screenHeight";
+    public static final String PROPERTY_SCREEN_WIDTH = "screenWidth";
+    public static final String PROPERTY_BROWSER_TIME_ZONE_OFFSET = "timeZoneOffset";
+
+    // 3-D Secure v1
     public static final String PROPERTY_PA_RES = "PaRes";
     public static final String PROPERTY_MD = "MD";
     public static final String PROPERTY_TERM_URL = "TermUrl";
-    public static final String PROPERTY_USER_AGENT = "userAgent";
-    public static final String PROPERTY_ACCEPT_HEADER = "acceptHeader";
     public static final String PROPERTY_THREE_D_THRESHOLD = "threeDThreshold";
     public static final String PROPERTY_MPI_DATA_DIRECTORY_RESPONSE = "mpiDataDirectoryResponse";
     public static final String PROPERTY_MPI_DATA_AUTHENTICATION_RESPONSE = "mpiDataAuthenticationResponse";
@@ -143,6 +152,26 @@ public class AdyenPaymentPluginApi extends PluginPaymentPluginApi<AdyenResponses
     public static final String PROPERTY_MPI_DATA_XID = "mpiDataXid";
     public static final String PROPERTY_MPI_DATA_ECI = "mpiDataEci";
     public static final String PROPERTY_MPI_IMPLEMENTATION_TYPE = "mpiImplementationType";
+
+    // 3-D Secure v2
+    public static final String PROPERTY_NOTIFICATION_URL = "threeDSMethodNotificationURL";
+    public static final String PROPERTY_METHOD_NOTIFICATION_URL = "threeDSMethodNotificationURL";
+    public static final String PROPERTY_THREEDS_SERVER_TRANS_ID = "threeds2.threeDSServerTransID";
+    public static final String PROPERTY_THREEDS2_TOKEN = "threeds2.threeDS2Token";
+    public static final String PROPERTY_THREEDS_METHOD_URL = "threeds2.threeDSMethodURL";
+    public static final String PROPERTY_ACS_TRANS_ID = "threeds2.threeDS2ResponseData.acsTransID";
+    public static final String PROPERTY_ACS_URL = "threeds2.threeDS2ResponseData.acsURL";
+    public static final String PROPERTY_MESSAGE_VERSION = "messageVersion";
+    public static final String PROPERTY_THREEDS_COMP_IND = "threeDSCompInd";
+    public static final String PROPERTY_TRANS_STATUS = "threeds2.threeDS2ResponseData.transStatus";
+    public static final String PROPERTY_ACS_CHALLENGE_MANDATED = "threeds2.threeDS2ResponseData.acsChallengeMandated";
+    public static final String PROPERTY_AUTHENTICATION_TYPE = "threeds2.threeDS2ResponseData.authenticationType";
+    public static final String PROPERTY_DS_TRANS_ID = "threeds2.threeDS2ResponseData.dsTransID";
+    public static final String PROPERTY_ACS_REFERENCE_NUMBER = "threeds2.threeDS2ResponseData.acsReferenceNumber";
+
+    public static final String PROPERTY_RESPONSE_MESSAGE_VERSION = "threeds2.threeDS2ResponseData.messageVersion";
+    public static final String PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID = "threeds2.threeDS2ResponseData.threeDSServerTransID";
+
 
     // Credit cards
     public static final String PROPERTY_CC_ISSUER_COUNTRY = "issuerCountry";
@@ -700,7 +729,28 @@ public class AdyenPaymentPluginApi extends PluginPaymentPluginApi<AdyenResponses
                                                  if (existingAuth != null) {
                                                      // We are completing a 3D-S payment
                                                      final String originalMerchantAccount = getMerchantAccountFromRecord(existingAuth);
-                                                     return adyenPort.authorize3DSecure(originalMerchantAccount != null? originalMerchantAccount: merchantAccount, paymentData, userData, splitSettlementData, additionalData);
+                                                     final List<PluginProperty> threeDS2Data = getThreeDS2DataFromRecord(existingAuth);
+                                                     if (paymentData.getPaymentInfo().hasThreeDS2Data() || !threeDS2Data.isEmpty()) {
+                                                         // TODO: see if there is a way to store the 3ds2 data in a
+                                                         //       place such that the data is available when the payment
+                                                         //       info is created initially
+                                                         PaymentInfoMappingService.set3DS2Fields(paymentData.getPaymentInfo(), threeDS2Data);
+                                                         return adyenPort.authorize3Ds2(
+                                                                 originalMerchantAccount != null ? originalMerchantAccount : merchantAccount,
+                                                                 paymentData,
+                                                                 userData,
+                                                                 splitSettlementData,
+                                                                 additionalData
+                                                         );
+                                                     } else {
+                                                         return adyenPort.authorize3DSecure(
+                                                                 originalMerchantAccount != null ? originalMerchantAccount : merchantAccount,
+                                                                 paymentData,
+                                                                 userData,
+                                                                 splitSettlementData,
+                                                                 additionalData
+                                                         );
+                                                     }
                                                  } else {
                                                      // We are creating a new transaction (AUTHORIZE, PURCHASE or CREDIT)
                                                      if (transactionType == TransactionType.CREDIT) {
@@ -1123,6 +1173,54 @@ public class AdyenPaymentPluginApi extends PluginPaymentPluginApi<AdyenResponses
             return merchantAccountCode.toString();
         }
         return null;
+    }
+
+    private List<PluginProperty> getThreeDS2DataFromRecord(final AdyenResponsesRecord adyenResponsesRecord) {
+        final Map additionalData = AdyenDao.fromAdditionalData(adyenResponsesRecord.getAdditionalData());
+
+        final Object threeDS2Token = additionalData.get(AdyenPaymentPluginApi.PROPERTY_THREEDS2_TOKEN);
+        final Object threeDSServerTransID = additionalData.get(AdyenPaymentPluginApi.PROPERTY_THREEDS_SERVER_TRANS_ID);
+        final Object threeDSAcsTransID = additionalData.get(AdyenPaymentPluginApi.PROPERTY_ACS_TRANS_ID);
+        final Object threeDSMessageVersion = additionalData.get(AdyenPaymentPluginApi.PROPERTY_MESSAGE_VERSION);
+        final Object threeDSCompInd = additionalData.get(AdyenPaymentPluginApi.PROPERTY_THREEDS_COMP_IND);
+        final Object transStatus = additionalData.get(AdyenPaymentPluginApi.PROPERTY_TRANS_STATUS);
+        final Object acsChallengeMandated = additionalData.get(AdyenPaymentPluginApi.PROPERTY_ACS_CHALLENGE_MANDATED);
+        final Object authenticationType = additionalData.get(AdyenPaymentPluginApi.PROPERTY_AUTHENTICATION_TYPE);
+        final Object dsTransID = additionalData.get(AdyenPaymentPluginApi.PROPERTY_DS_TRANS_ID);
+        final Object acsReferenceNumber = additionalData.get(AdyenPaymentPluginApi.PROPERTY_ACS_REFERENCE_NUMBER);
+
+        ImmutableList.Builder<PluginProperty> builder = ImmutableList.builder();
+        if (threeDS2Token != null) {
+            builder.add(new PluginProperty(PROPERTY_THREEDS2_TOKEN, threeDS2Token.toString(), false));
+        }
+        if (threeDSServerTransID != null) {
+            builder.add(new PluginProperty(PROPERTY_THREEDS_SERVER_TRANS_ID, threeDSServerTransID.toString(), false));
+        }
+        if (threeDSAcsTransID != null) {
+            builder.add(new PluginProperty(PROPERTY_ACS_TRANS_ID, threeDSAcsTransID.toString(), false));
+        }
+        if (threeDSMessageVersion != null) {
+            builder.add(new PluginProperty(PROPERTY_MESSAGE_VERSION, threeDSMessageVersion.toString(), false));
+        }
+        if (threeDSCompInd != null) {
+            builder.add(new PluginProperty(PROPERTY_THREEDS_COMP_IND, threeDSCompInd.toString(), false));
+        }
+        if (transStatus != null) {
+            builder.add(new PluginProperty(PROPERTY_TRANS_STATUS, transStatus.toString(), false));
+        }
+        if (acsChallengeMandated != null) {
+            builder.add(new PluginProperty(PROPERTY_ACS_CHALLENGE_MANDATED, acsChallengeMandated.toString(), false));
+        }
+        if (authenticationType != null) {
+            builder.add(new PluginProperty(PROPERTY_AUTHENTICATION_TYPE, authenticationType.toString(), false));
+        }
+        if (dsTransID != null) {
+            builder.add(new PluginProperty(PROPERTY_DS_TRANS_ID, dsTransID.toString(), false));
+        }
+        if (acsReferenceNumber != null) {
+            builder.add(new PluginProperty(PROPERTY_ACS_REFERENCE_NUMBER, acsReferenceNumber.toString(), false));
+        }
+        return builder.build();
     }
 
     private AdyenConfigProperties getConfigProperties(final TenantContext context) {

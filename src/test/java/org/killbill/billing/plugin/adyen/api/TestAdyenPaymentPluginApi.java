@@ -19,12 +19,10 @@ package org.killbill.billing.plugin.adyen.api;
 
 import java.math.BigDecimal;
 import java.net.URL;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
 import org.joda.time.Period;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -47,7 +45,6 @@ import org.killbill.billing.plugin.TestUtils;
 import org.killbill.billing.plugin.adyen.dao.AdyenDao;
 import org.killbill.billing.plugin.adyen.dao.gen.tables.records.AdyenPaymentMethodsRecord;
 import org.killbill.billing.plugin.api.PluginProperties;
-import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -62,10 +59,7 @@ import com.google.common.collect.Lists;
 import com.jayway.restassured.http.ContentType;
 
 import static com.jayway.restassured.RestAssured.given;
-import static org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi.PROPERTY_DD_ACCOUNT_NUMBER;
-import static org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi.PROPERTY_DD_BANK_IDENTIFIER_CODE;
-import static org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi.PROPERTY_DD_HOLDER_NAME;
-import static org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi.PROPERTY_ELV_BLZ;
+import static org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi.*;
 import static org.killbill.billing.plugin.api.payment.PluginPaymentPluginApi.PROPERTY_COUNTRY;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -81,105 +75,136 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
     private static final int HTTP_PORT = 80;
     private static final int HTTPS_PORT = 443;
     private static final Map<TransactionType, String> TRANSACTION_TYPE_TO_EVENT_CODE = ImmutableMap.<TransactionType, String>builder().put(TransactionType.VOID, "CANCELLATION")
-                                                                                                                                      .put(TransactionType.REFUND, "REFUND")
-                                                                                                                                      .put(TransactionType.CAPTURE, "CAPTURE")
-                                                                                                                                      .put(TransactionType.CREDIT, "REFUND_WITH_DATA")
-                                                                                                                                      .put(TransactionType.CHARGEBACK, "CHARGEBACK")
-                                                                                                                                      .put(TransactionType.AUTHORIZE, "AUTHORISATION")
-                                                                                                                                      .put(TransactionType.PURCHASE, "AUTHORISATION")
-                                                                                                                                      .build();
+            .put(TransactionType.REFUND, "REFUND")
+            .put(TransactionType.CAPTURE, "CAPTURE")
+            .put(TransactionType.CREDIT, "REFUND_WITH_DATA")
+            .put(TransactionType.CHARGEBACK, "CHARGEBACK")
+            .put(TransactionType.AUTHORIZE, "AUTHORISATION")
+            .put(TransactionType.PURCHASE, "AUTHORISATION")
+            .build();
+    private static final Map<String, String> three3DSbrowserInfo = ImmutableMap.<String, String>builder()
+            .put(AdyenPaymentPluginApi.PROPERTY_USER_AGENT, "Java/1.8")
+            .put(AdyenPaymentPluginApi.PROPERTY_ACCEPT_HEADER, "application/json")
+            .put(AdyenPaymentPluginApi.PROPERTY_BROWSER_LANGUAGE, "de")
+            .put(AdyenPaymentPluginApi.PROPERTY_COLOR_DEPTH, "32")
+            .put(AdyenPaymentPluginApi.PROPERTY_SCREEN_HEIGHT, "1125")
+            .put(AdyenPaymentPluginApi.PROPERTY_SCREEN_WIDTH, "2436")
+            .put(AdyenPaymentPluginApi.PROPERTY_BROWSER_TIME_ZONE_OFFSET, "-420")
+            .put(AdyenPaymentPluginApi.PROPERTY_JAVA_ENABLED, "false")
+            .put(AdyenPaymentPluginApi.PROPERTY_JAVA_SCRIPT_ENABLED, "true")
+            .build();
     private final Iterable<PluginProperty> propertiesWithCCInfo = PluginProperties.buildPluginProperties(ImmutableMap.<String, String>builder()
-                                                                                                                 .put(AdyenPaymentPluginApi.PROPERTY_CC_TYPE, CC_TYPE)
-                                                                                                                 .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Dupont")
-                                                                                                                 .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_NUMBER)
-                                                                                                                 .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
-                                                                                                                 .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
-                                                                                                                 .build());
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_TYPE, CC_TYPE)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Dupont")
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_NUMBER)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
+            .build());
     private final Iterable<PluginProperty> propertiesWith3DSInfo = PluginProperties.buildPluginProperties(ImmutableMap.<String, String>builder()
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_TYPE, CC_TYPE)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Montblanc")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_3DS_NUMBER)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_VERIFICATION_VALUE, CC_3DS_VERIFICATION_VALUE)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_USER_AGENT, "Java/1.8")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_ACCEPT_HEADER, "application/json")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_TERM_URL, "dummy://url")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_THREE_D_THRESHOLD, "25000")
-                                                                                                                  .build());
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_TYPE, CC_TYPE)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Montblanc")
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_3DS_NUMBER)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_VERIFICATION_VALUE, CC_3DS_VERIFICATION_VALUE)
+            .put(AdyenPaymentPluginApi.PROPERTY_USER_AGENT, "Java/1.8")
+            .put(AdyenPaymentPluginApi.PROPERTY_ACCEPT_HEADER, "application/json")
+            .put(AdyenPaymentPluginApi.PROPERTY_TERM_URL, "dummy://url")
+            .put(AdyenPaymentPluginApi.PROPERTY_THREE_D_THRESHOLD, "25000")
+            .build());
+    private final Iterable<PluginProperty> propertiesFor3DS2IdentifyShopper = PluginProperties.buildPluginProperties(ImmutableMap.<String, String>builder()
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_TYPE, CC_TYPE)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Montblanc")
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_3DS2_NUMBER_IDENTIFY_SHOPPER)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_VERIFICATION_VALUE, CC_3DS2_VERIFICATION_VALUE)
+            .put(AdyenPaymentPluginApi.PROPERTY_NOTIFICATION_URL, "https://example.com")
+            .putAll(three3DSbrowserInfo)
+            .build());
+    private final Iterable<PluginProperty> propertiesFor3DS2ChallengeShopper = PluginProperties.buildPluginProperties(ImmutableMap.<String, String>builder()
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_TYPE, CC_TYPE)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Montblanc")
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_3DS2_NUMBER_CHALLENGE_SHOPPER)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_VERIFICATION_VALUE, CC_3DS2_VERIFICATION_VALUE)
+            .put(AdyenPaymentPluginApi.PROPERTY_NOTIFICATION_URL, "https://example.com")
+            .putAll(three3DSbrowserInfo)
+            .build());
     private final Iterable<PluginProperty> propertiesWithGooglePay = PluginProperties.buildPluginProperties(ImmutableMap.<String, String>builder()
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Googlepaytester")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_SELECTED_BRAND, "paywithgoogle")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_MPI_DATA_CAVV, MPI_DATA_CAVV)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_NUMBER_VISA)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
-                                                                                                                  .build());
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Googlepaytester")
+            .put(AdyenPaymentPluginApi.PROPERTY_SELECTED_BRAND, "paywithgoogle")
+            .put(AdyenPaymentPluginApi.PROPERTY_MPI_DATA_CAVV, MPI_DATA_CAVV)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_NUMBER_VISA)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
+            .build());
     private final Iterable<PluginProperty> propertiesWithApplePay = PluginProperties.buildPluginProperties(ImmutableMap.<String, String>builder()
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Applepaytester")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_SELECTED_BRAND, "applepay")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_MPI_DATA_CAVV, MPI_DATA_CAVV)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_NUMBER_VISA)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
-                                                                                                                  .build());
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Applepaytester")
+            .put(AdyenPaymentPluginApi.PROPERTY_SELECTED_BRAND, "applepay")
+            .put(AdyenPaymentPluginApi.PROPERTY_MPI_DATA_CAVV, MPI_DATA_CAVV)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_NUMBER_VISA)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
+            .build());
     private final Iterable<PluginProperty> propertiesWithApplePayRecurring = PluginProperties.buildPluginProperties(ImmutableMap.<String, String>builder()
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Applepaytester")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_SELECTED_BRAND, "applepay")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_MPI_DATA_CAVV, MPI_DATA_CAVV)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_NUMBER_VISA)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_RECURRING_TYPE, "RECURRING")
-                                                                                                                  .build());
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Applepaytester")
+            .put(AdyenPaymentPluginApi.PROPERTY_SELECTED_BRAND, "applepay")
+            .put(AdyenPaymentPluginApi.PROPERTY_MPI_DATA_CAVV, MPI_DATA_CAVV)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_NUMBER_VISA)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
+            .put(AdyenPaymentPluginApi.PROPERTY_RECURRING_TYPE, "RECURRING")
+            .build());
     private final Iterable<PluginProperty> propertiesWithAVSInfo = PluginProperties.buildPluginProperties(ImmutableMap.<String, String>builder()
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_TYPE, CC_TYPE)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Avschecker")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_AVS_NUMBER)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_VERIFICATION_VALUE, CC_CVV_VERIFICATION_VALUE)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_ADDRESS1, "1600 Pennsylvania Ave NW")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_ADDRESS2, "")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CITY, "Washington")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_STATE, "DC")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_ZIP, "20500")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_COUNTRY, DEFAULT_COUNTRY)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_USER_AGENT, "Java/1.8")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_ACCEPT_HEADER, "application/json")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_TERM_URL, "dummy://url")
-                                                                                                                  .build());
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_TYPE, CC_TYPE)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Avschecker")
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_AVS_NUMBER)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_VERIFICATION_VALUE, CC_CVV_VERIFICATION_VALUE)
+            .put(AdyenPaymentPluginApi.PROPERTY_ADDRESS1, "1600 Pennsylvania Ave NW")
+            .put(AdyenPaymentPluginApi.PROPERTY_ADDRESS2, "")
+            .put(AdyenPaymentPluginApi.PROPERTY_CITY, "Washington")
+            .put(AdyenPaymentPluginApi.PROPERTY_STATE, "DC")
+            .put(AdyenPaymentPluginApi.PROPERTY_ZIP, "20500")
+            .put(AdyenPaymentPluginApi.PROPERTY_COUNTRY, DEFAULT_COUNTRY)
+            .put(AdyenPaymentPluginApi.PROPERTY_USER_AGENT, "Java/1.8")
+            .put(AdyenPaymentPluginApi.PROPERTY_ACCEPT_HEADER, "application/json")
+            .put(AdyenPaymentPluginApi.PROPERTY_TERM_URL, "dummy://url")
+            .build());
     private final Iterable<PluginProperty> propertiesWithBadAVSInfo = PluginProperties.buildPluginProperties(ImmutableMap.<String, String>builder()
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_TYPE, CC_TYPE)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Avschecker")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_AVS_NUMBER)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CC_VERIFICATION_VALUE, CC_CVV_VERIFICATION_VALUE)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_ADDRESS1, "1600 Pennsylvania Ave NW")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_ADDRESS2, "")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_CITY, "Washington")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_STATE, "DC")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_ZIP, "20501")  // zip is wrong
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_COUNTRY, DEFAULT_COUNTRY)
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_USER_AGENT, "Java/1.8")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_ACCEPT_HEADER, "application/json")
-                                                                                                                  .put(AdyenPaymentPluginApi.PROPERTY_TERM_URL, "dummy://url")
-                                                                                                                  .build());
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_TYPE, CC_TYPE)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Avschecker")
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_AVS_NUMBER)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_VERIFICATION_VALUE, CC_CVV_VERIFICATION_VALUE)
+            .put(AdyenPaymentPluginApi.PROPERTY_ADDRESS1, "1600 Pennsylvania Ave NW")
+            .put(AdyenPaymentPluginApi.PROPERTY_ADDRESS2, "")
+            .put(AdyenPaymentPluginApi.PROPERTY_CITY, "Washington")
+            .put(AdyenPaymentPluginApi.PROPERTY_STATE, "DC")
+            .put(AdyenPaymentPluginApi.PROPERTY_ZIP, "20501")  // zip is wrong
+            .put(AdyenPaymentPluginApi.PROPERTY_COUNTRY, DEFAULT_COUNTRY)
+            .put(AdyenPaymentPluginApi.PROPERTY_USER_AGENT, "Java/1.8")
+            .put(AdyenPaymentPluginApi.PROPERTY_ACCEPT_HEADER, "application/json")
+            .put(AdyenPaymentPluginApi.PROPERTY_TERM_URL, "dummy://url")
+            .build());
 
     private final Iterable<PluginProperty> propertiesWithZipCodeOnlyAVSInfo = PluginProperties.buildPluginProperties(ImmutableMap.<String, String>builder()
-                                                                                                                     .put(AdyenPaymentPluginApi.PROPERTY_CC_TYPE, CC_TYPE)
-                                                                                                                     .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Avschecker")
-                                                                                                                     .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_AVS_NUMBER)
-                                                                                                                     .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
-                                                                                                                     .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
-                                                                                                                     .put(AdyenPaymentPluginApi.PROPERTY_CC_VERIFICATION_VALUE, CC_CVV_VERIFICATION_VALUE)
-                                                                                                                     .put(AdyenPaymentPluginApi.PROPERTY_ZIP, "20500") // only sending the zip code
-                                                                                                                     .put(AdyenPaymentPluginApi.PROPERTY_COUNTRY, DEFAULT_COUNTRY)
-                                                                                                                     .put(AdyenPaymentPluginApi.PROPERTY_USER_AGENT, "Java/1.8")
-                                                                                                                     .put(AdyenPaymentPluginApi.PROPERTY_ACCEPT_HEADER, "application/json")
-                                                                                                                     .put(AdyenPaymentPluginApi.PROPERTY_TERM_URL, "dummy://url")
-                                                                                                                     .build());
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_TYPE, CC_TYPE)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_LAST_NAME, "Avschecker")
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_NUMBER, CC_AVS_NUMBER)
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_MONTH, String.valueOf(CC_EXPIRATION_MONTH))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_EXPIRATION_YEAR, String.valueOf(CC_EXPIRATION_YEAR))
+            .put(AdyenPaymentPluginApi.PROPERTY_CC_VERIFICATION_VALUE, CC_CVV_VERIFICATION_VALUE)
+            .put(AdyenPaymentPluginApi.PROPERTY_ZIP, "20500") // only sending the zip code
+            .put(AdyenPaymentPluginApi.PROPERTY_COUNTRY, DEFAULT_COUNTRY)
+            .put(AdyenPaymentPluginApi.PROPERTY_USER_AGENT, "Java/1.8")
+            .put(AdyenPaymentPluginApi.PROPERTY_ACCEPT_HEADER, "application/json")
+            .put(AdyenPaymentPluginApi.PROPERTY_TERM_URL, "dummy://url")
+            .build());
     private Map<String, String> propertiesForRecurring;
 
     @Override
@@ -671,6 +696,258 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
                                                                                                                                  authorizationInfoPlugin1.getKbPaymentId(),
                                                                                                                                  ImmutableList.<PluginProperty>of(),
                                                                                                                                  context);
+        assertEquals(paymentTransactionInfoPluginsPostCapture.size(), 2);
+        assertEquals(paymentTransactionInfoPluginsPostCapture.get(0).getTransactionType(), TransactionType.AUTHORIZE);
+        assertEquals(paymentTransactionInfoPluginsPostCapture.get(0).getStatus(), PaymentPluginStatus.PROCESSED);
+        assertEquals(paymentTransactionInfoPluginsPostCapture.get(1).getTransactionType(), TransactionType.CAPTURE);
+        assertEquals(paymentTransactionInfoPluginsPostCapture.get(1).getStatus(), PaymentPluginStatus.PENDING);
+    }
+
+    @Test(groups = "integration")
+    public void testAuthorize3DS2IdentifyShopper() throws Exception {
+        adyenPaymentPluginApi.addPaymentMethod(account.getId(), account.getPaymentMethodId(), adyenEmptyPaymentMethodPlugin(), true, propertiesFor3DS2IdentifyShopper, context);
+
+        final Payment payment = TestUtils.buildPayment(account.getId(), account.getPaymentMethodId(), account.getCurrency(), killbillApi);
+        final PaymentTransaction authorizationTransaction = TestUtils.buildPaymentTransaction(payment, TransactionType.AUTHORIZE, new BigDecimal("12100"), account.getCurrency());
+        final PaymentTransaction captureTransaction = TestUtils.buildPaymentTransaction(payment, TransactionType.CAPTURE, new BigDecimal("12100"), account.getCurrency());
+
+        final PaymentTransactionInfoPlugin authorizationInfoPlugin1 = adyenPaymentPluginApi.authorizePayment(account.getId(),
+                payment.getId(),
+                authorizationTransaction.getId(),
+                account.getPaymentMethodId(),
+                authorizationTransaction.getAmount(),
+                authorizationTransaction.getCurrency(),
+                propertiesFor3DS2IdentifyShopper,
+                context);
+
+        final String threeDSServerTransID = PluginProperties.findPluginPropertyValue(PROPERTY_THREEDS_SERVER_TRANS_ID, authorizationInfoPlugin1.getProperties());
+        final String threeDS2Token = PluginProperties.findPluginPropertyValue(PROPERTY_THREEDS2_TOKEN, authorizationInfoPlugin1.getProperties());
+        final URL threeDSMethodURL = new URL(PluginProperties.findPluginPropertyValue(PROPERTY_THREEDS_METHOD_URL, authorizationInfoPlugin1.getProperties()));
+        final String notificationURL = PluginProperties.findPluginPropertyValue(PROPERTY_NOTIFICATION_URL, propertiesFor3DS2IdentifyShopper);
+
+        assertNull(authorizationInfoPlugin1.getGatewayErrorCode());
+        assertNotNull(threeDSServerTransID);
+        assertNotNull(threeDS2Token);
+        assertNotNull(threeDSMethodURL);
+
+        final String expectedMerchantAccount = getExpectedMerchantAccount(payment);
+        final PaymentTransactionInfoPlugin paymentInfo = Iterables.getLast(adyenPaymentPluginApi.getPaymentInfo(payment.getAccountId(), payment.getId(), null, context));
+        assertEquals(PluginProperties.findPluginPropertyValue("merchantAccountCode", paymentInfo.getProperties()), expectedMerchantAccount);
+
+        // Verify GET path
+        final List<PaymentTransactionInfoPlugin> paymentTransactionInfoPluginsPreCompletion = adyenPaymentPluginApi.getPaymentInfo(account.getId(),
+                authorizationInfoPlugin1.getKbPaymentId(),
+                ImmutableList.<PluginProperty>of(),
+                context);
+        assertEquals(paymentTransactionInfoPluginsPreCompletion.size(), 1);
+        assertTrue(paymentTransactionInfoPluginsPreCompletion.get(0) instanceof AdyenPaymentTransactionInfoPlugin);
+
+        AdyenPaymentTransactionInfoPlugin adyenInfoObj = (AdyenPaymentTransactionInfoPlugin)paymentTransactionInfoPluginsPreCompletion.get(0);
+
+        assertEquals(adyenInfoObj.getTransactionType(), TransactionType.AUTHORIZE);
+        assertTrue(adyenInfoObj.getAdyenResponseRecord().isPresent());
+        assertEquals(adyenInfoObj.getAdyenResponseRecord().get().getResultCode(), "IdentifyShopper");
+
+        String pspReference = adyenInfoObj.getAdyenResponseRecord().get().getPspReference();
+
+        Map<String, String> threeDSMethodData = ImmutableMap.of("threeDSServerTransID", threeDSServerTransID, PROPERTY_METHOD_NOTIFICATION_URL, notificationURL);
+
+        String threeDSMethodDataJson = new ObjectMapper().writeValueAsString(threeDSMethodData);
+        String encodedThreeDSMethodDataJson = Base64.getEncoder().encodeToString(threeDSMethodDataJson.getBytes(Charsets.UTF_8));
+
+        final String responseHTML = given().log().all()
+                .contentType(ContentType.URLENC)
+                .accept(ContentType.HTML)
+                .formParam("threeDSMethodData", encodedThreeDSMethodDataJson)
+                .post(threeDSMethodURL)
+                .then().log().all()
+                .statusCode(HTTP_200_OK)
+                .extract().asString();
+
+        final Map<String, String> formParams = extractForm(responseHTML);
+        assertFalse(formParams.isEmpty(), "No FORM found in HTML response");
+
+        final Map<String, String> identifyResponseForm = ImmutableMap.of(PROPERTY_THREEDS_COMP_IND, "Y");
+        final List<PluginProperty> propertiesWithFormParams = PluginProperties.buildPluginProperties(identifyResponseForm);
+
+        final PaymentTransactionInfoPlugin authorizationInfoPlugin2 = adyenPaymentPluginApi.authorizePayment(account.getId(),
+                payment.getId(),
+                authorizationTransaction.getId(),
+                account.getPaymentMethodId(),
+                authorizationTransaction.getAmount(),
+                authorizationTransaction.getCurrency(),
+                propertiesWithFormParams,
+                context);
+
+        // Verify GET path
+        final List<PaymentTransactionInfoPlugin> paymentTransactionInfoPluginsPreCompletion2 = adyenPaymentPluginApi.getPaymentInfo(account.getId(),
+                authorizationInfoPlugin1.getKbPaymentId(),
+                ImmutableList.<PluginProperty>of(),
+                context);
+        assertEquals(paymentTransactionInfoPluginsPreCompletion2.size(), 1);
+        assertTrue(paymentTransactionInfoPluginsPreCompletion2.get(0) instanceof AdyenPaymentTransactionInfoPlugin);
+
+        AdyenPaymentTransactionInfoPlugin adyenInfoObj2 = (AdyenPaymentTransactionInfoPlugin)paymentTransactionInfoPluginsPreCompletion2.get(0);
+        assertTrue(adyenInfoObj2.getAdyenResponseRecord().isPresent());
+        assertEquals(adyenInfoObj2.getAdyenResponseRecord().get().getResultCode(), "ChallengeShopper");
+
+        final String messageVersion = PluginProperties.findPluginPropertyValue(PROPERTY_RESPONSE_MESSAGE_VERSION, authorizationInfoPlugin2.getProperties());
+        final String transId = PluginProperties.findPluginPropertyValue(PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID, authorizationInfoPlugin2.getProperties());
+        final String acsTransId = PluginProperties.findPluginPropertyValue(PROPERTY_ACS_TRANS_ID, authorizationInfoPlugin2.getProperties());
+
+
+        assertNotNull(messageVersion);
+        assertNotNull(transId);
+        assertNotNull(acsTransId);
+
+        assertEquals(pspReference, adyenInfoObj2.getAdyenResponseRecord().get().getPspReference());
+
+//        verifyPaymentTransactionInfoPlugin(payment, authorizationTransaction, authorizationInfoPlugin2);
+//        assertEquals(authorizationInfoPlugin2.getFirstPaymentReferenceId(), authorizationInfoPlugin1.getFirstPaymentReferenceId());
+
+//        // Verify GET path
+//        final List<PaymentTransactionInfoPlugin> paymentTransactionInfoPluginsPostCompletion = adyenPaymentPluginApi.getPaymentInfo(account.getId(),
+//                authorizationInfoPlugin1.getKbPaymentId(),
+//                ImmutableList.<PluginProperty>of(),
+//                context);
+//        assertEquals(paymentTransactionInfoPluginsPostCompletion.size(), 1);
+//        assertEquals(paymentTransactionInfoPluginsPostCompletion.get(0).getTransactionType(), TransactionType.AUTHORIZE);
+//        assertEquals(paymentTransactionInfoPluginsPostCompletion.get(0).getStatus(), PaymentPluginStatus.PROCESSED);
+//
+//        final PaymentTransactionInfoPlugin captureInfoPlugin = adyenPaymentPluginApi.capturePayment(account.getId(),
+//                payment.getId(),
+//                captureTransaction.getId(),
+//                account.getPaymentMethodId(),
+//                captureTransaction.getAmount(),
+//                captureTransaction.getCurrency(),
+//                authorizationInfoPlugin2.getProperties(),
+//                context);
+//
+//        verifyPaymentTransactionInfoPlugin(payment, captureTransaction, captureInfoPlugin);
+//
+//        // Verify GET path
+//        final List<PaymentTransactionInfoPlugin> paymentTransactionInfoPluginsPostCapture = adyenPaymentPluginApi.getPaymentInfo(account.getId(),
+//                authorizationInfoPlugin1.getKbPaymentId(),
+//                ImmutableList.<PluginProperty>of(),
+//                context);
+//        assertEquals(paymentTransactionInfoPluginsPostCapture.size(), 2);
+//        assertEquals(paymentTransactionInfoPluginsPostCapture.get(0).getTransactionType(), TransactionType.AUTHORIZE);
+//        assertEquals(paymentTransactionInfoPluginsPostCapture.get(0).getStatus(), PaymentPluginStatus.PROCESSED);
+//        assertEquals(paymentTransactionInfoPluginsPostCapture.get(1).getTransactionType(), TransactionType.CAPTURE);
+//        assertEquals(paymentTransactionInfoPluginsPostCapture.get(1).getStatus(), PaymentPluginStatus.PENDING);
+    }
+
+
+    @Test(groups = "integration")
+    public void testAuthorize3DS2ChallengeShopper() throws Exception {
+        adyenPaymentPluginApi.addPaymentMethod(account.getId(), account.getPaymentMethodId(), adyenEmptyPaymentMethodPlugin(), true, propertiesFor3DS2ChallengeShopper, context);
+
+        final Payment payment = TestUtils.buildPayment(account.getId(), account.getPaymentMethodId(), account.getCurrency(), killbillApi);
+        final PaymentTransaction authorizationTransaction = TestUtils.buildPaymentTransaction(payment, TransactionType.AUTHORIZE, new BigDecimal("12100"), account.getCurrency());
+        final PaymentTransaction captureTransaction = TestUtils.buildPaymentTransaction(payment, TransactionType.CAPTURE, new BigDecimal("12100"), account.getCurrency());
+
+        final PaymentTransactionInfoPlugin authorizationInfoPlugin1 = adyenPaymentPluginApi.authorizePayment(account.getId(),
+                payment.getId(),
+                authorizationTransaction.getId(),
+                account.getPaymentMethodId(),
+                authorizationTransaction.getAmount(),
+                authorizationTransaction.getCurrency(),
+                propertiesFor3DS2ChallengeShopper,
+                context);
+
+        final String threeDSServerTransID = PluginProperties.findPluginPropertyValue(PROPERTY_THREEDS_SERVER_TRANS_ID, authorizationInfoPlugin1.getProperties());
+        final String threeDS2Token = PluginProperties.findPluginPropertyValue(PROPERTY_THREEDS2_TOKEN, authorizationInfoPlugin1.getProperties());
+        final String acsTransID = PluginProperties.findPluginPropertyValue(PROPERTY_ACS_TRANS_ID, authorizationInfoPlugin1.getProperties());
+        final String acsURL = PluginProperties.findPluginPropertyValue(PROPERTY_ACS_URL, authorizationInfoPlugin1.getProperties());
+        final String messageVersion = PluginProperties.findPluginPropertyValue(PROPERTY_MESSAGE_VERSION, authorizationInfoPlugin1.getProperties());
+
+        assertNull(authorizationInfoPlugin1.getGatewayErrorCode());
+        assertNotNull(threeDSServerTransID);
+        assertNotNull(threeDS2Token);
+        assertNotNull(acsTransID);
+
+        final String expectedMerchantAccount = getExpectedMerchantAccount(payment);
+        final PaymentTransactionInfoPlugin paymentInfo = Iterables.getLast(adyenPaymentPluginApi.getPaymentInfo(payment.getAccountId(), payment.getId(), null, context));
+        assertEquals(PluginProperties.findPluginPropertyValue("merchantAccountCode", paymentInfo.getProperties()), expectedMerchantAccount);
+
+        // Verify GET path
+        final List<PaymentTransactionInfoPlugin> paymentTransactionInfoPluginsPreCompletion = adyenPaymentPluginApi.getPaymentInfo(account.getId(),
+                authorizationInfoPlugin1.getKbPaymentId(),
+                ImmutableList.<PluginProperty>of(),
+                context);
+        assertEquals(paymentTransactionInfoPluginsPreCompletion.size(), 1);
+        assertTrue(paymentTransactionInfoPluginsPreCompletion.get(0) instanceof AdyenPaymentTransactionInfoPlugin);
+
+        AdyenPaymentTransactionInfoPlugin adyenInfoObj = (AdyenPaymentTransactionInfoPlugin)paymentTransactionInfoPluginsPreCompletion.get(0);
+
+        assertEquals(adyenInfoObj.getTransactionType(), TransactionType.AUTHORIZE);
+        assertTrue(adyenInfoObj.getAdyenResponseRecord().isPresent());
+        assertEquals(adyenInfoObj.getAdyenResponseRecord().get().getResultCode(), "ChallengeShopper");
+
+        Map<String, String> threeDSMethodData = ImmutableMap.of(
+                "threeDSServerTransID", threeDSServerTransID,
+                "acsTransID", acsTransID,
+                "messageVersion", messageVersion,
+                "challengeWindowSize", "05",
+                "messageType", "CReq"
+        );
+
+        String threeDSMethodDataJson = new ObjectMapper().writeValueAsString(threeDSMethodData);
+        String encodedThreeDSMethodDataJson = Base64.getEncoder().encodeToString(threeDSMethodDataJson.getBytes(Charsets.UTF_8));
+
+        final String responseHTML = given().log().all()
+                .contentType(ContentType.URLENC)
+                .accept(ContentType.HTML)
+                .formParam("creq", encodedThreeDSMethodDataJson)
+                .post(acsURL)
+                .then().log().all()
+                .statusCode(HTTP_200_OK)
+                .extract().asString();
+
+        final Map<String, String> formParams = extractForm(responseHTML);
+        assertFalse(formParams.isEmpty(), "No FORM found in HTML response");
+
+        // TODO: adjust for challenge from here (step 7 in https://docs.adyen.com/classic-integration/3d-secure/3d-secure-2-classic-integration/browser-based-integration/#present-a-challenge)
+        final Map<String, String> identifyResponseForm = ImmutableMap.of(PROPERTY_THREEDS_COMP_IND, "Y");
+        final List<PluginProperty> propertiesWithFormParams = PluginProperties.buildPluginProperties(identifyResponseForm);
+
+        final PaymentTransactionInfoPlugin authorizationInfoPlugin2 = adyenPaymentPluginApi.authorizePayment(account.getId(),
+                payment.getId(),
+                authorizationTransaction.getId(),
+                account.getPaymentMethodId(),
+                authorizationTransaction.getAmount(),
+                authorizationTransaction.getCurrency(),
+                propertiesWithFormParams,
+                context);
+
+        verifyPaymentTransactionInfoPlugin(payment, authorizationTransaction, authorizationInfoPlugin2);
+        assertEquals(authorizationInfoPlugin2.getFirstPaymentReferenceId(), authorizationInfoPlugin1.getFirstPaymentReferenceId());
+
+        // Verify GET path
+        final List<PaymentTransactionInfoPlugin> paymentTransactionInfoPluginsPostCompletion = adyenPaymentPluginApi.getPaymentInfo(account.getId(),
+                authorizationInfoPlugin1.getKbPaymentId(),
+                ImmutableList.<PluginProperty>of(),
+                context);
+        assertEquals(paymentTransactionInfoPluginsPostCompletion.size(), 1);
+        assertEquals(paymentTransactionInfoPluginsPostCompletion.get(0).getTransactionType(), TransactionType.AUTHORIZE);
+        assertEquals(paymentTransactionInfoPluginsPostCompletion.get(0).getStatus(), PaymentPluginStatus.PROCESSED);
+
+        final PaymentTransactionInfoPlugin captureInfoPlugin = adyenPaymentPluginApi.capturePayment(account.getId(),
+                payment.getId(),
+                captureTransaction.getId(),
+                account.getPaymentMethodId(),
+                captureTransaction.getAmount(),
+                captureTransaction.getCurrency(),
+                authorizationInfoPlugin2.getProperties(),
+                context);
+
+        verifyPaymentTransactionInfoPlugin(payment, captureTransaction, captureInfoPlugin);
+
+        // Verify GET path
+        final List<PaymentTransactionInfoPlugin> paymentTransactionInfoPluginsPostCapture = adyenPaymentPluginApi.getPaymentInfo(account.getId(),
+                authorizationInfoPlugin1.getKbPaymentId(),
+                ImmutableList.<PluginProperty>of(),
+                context);
         assertEquals(paymentTransactionInfoPluginsPostCapture.size(), 2);
         assertEquals(paymentTransactionInfoPluginsPostCapture.get(0).getTransactionType(), TransactionType.AUTHORIZE);
         assertEquals(paymentTransactionInfoPluginsPostCapture.get(0).getStatus(), PaymentPluginStatus.PROCESSED);

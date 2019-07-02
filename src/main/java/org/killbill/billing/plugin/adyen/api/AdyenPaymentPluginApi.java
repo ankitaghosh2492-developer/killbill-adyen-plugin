@@ -238,6 +238,26 @@ public class AdyenPaymentPluginApi extends PluginPaymentPluginApi<AdyenResponses
     public static final String BRAND_APPLEPAY = "applepay";
     public static final String BRAND_PAYWITHGOOGLE = "paywithgoogle";
 
+    //3DS Account Info
+    public static final String ACCOUNT_AGE_INDICATOR = "accountAgeIndicator";
+    public static final String ACCOUNT_CHANGE_DATE = "accountChangeDate";
+    public static final String ACCOUNT_CHANGE_INDICATOR = "accountChangeIndicator";
+    public static final String ACCOUNT_CREATION_DATE= "accountCreationDate";
+    public static final String PASSWORD_CHANGE_DATE = "passwordChangeDate";
+    public static final String PASSWORD_CHANGE_DATE_INDICATOR = "passwordChangeDateIndicator";
+    public static final String PURCHASES_LAST_6_MONTHS = "purchasesLast6Months";
+    public static final String ADD_CARD_ATTEMPTS_DAY = "addCardAttemptsDay";
+    public static final String PAST_TRANSACTIONS_DAY = "pastTransactionsDay";
+    public static final String PAST_TRANSACTIONS_YEAR = "pastTransactionsYear";
+    public static final String PAYMENT_ACCOUNT_AGE = "paymentAccountAge";
+    public static final String PAYMENT_ACCOUNT_INDICATOR = "paymentAccountIndicator";
+    public static final String DELIVERY_ADDRESS_USAGE_DATE = "deliveryAddressUsageDate";
+    public static final String DELIVERY_ADDRESS_USAGE_INDICATOR = "deliveryAddressUsageIndicator";
+    public static final String SUSPICIOUS_ACTIVITY = "suspiciousActivity";
+    public static final String HOME_PHONE = "homePhone";
+    public static final String MOBILE_PHONE = "mobilePhone";
+    public static final String WORK_PHONE = "workPhone";
+
     private static final Logger logger = LoggerFactory.getLogger(AdyenPaymentPluginApi.class);
     private static final List<PaymentServiceProviderResult> PAYMENT_RESULT_TO_CANCEL_IN_HPP_COMPLETE = ImmutableList.of(PaymentServiceProviderResult.CANCELLED,
                                                                                                                         PaymentServiceProviderResult.REFUSED);

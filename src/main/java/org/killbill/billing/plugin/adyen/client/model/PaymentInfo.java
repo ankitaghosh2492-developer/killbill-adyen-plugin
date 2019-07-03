@@ -94,7 +94,7 @@ public class PaymentInfo {
     private String homePhone;
     private String mobilePhone;
     private String workPhone;
-
+    //passwordChangeIndicator AccountInfo Model Data
 
     public Integer getCaptureDelayHours() {
         return captureDelayHours;

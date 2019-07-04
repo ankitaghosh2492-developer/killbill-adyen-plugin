@@ -17,6 +17,12 @@
 
 package org.killbill.billing.plugin.adyen.client.model;
 
+import org.killbill.adyen.threeds2data.ThreeDS2TimeFrame;
+import org.killbill.adyen.threeds2data.ThreeDS2TimeFrameWithNotApplicable;
+
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlSchemaType;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.util.Map;
 
 public class PaymentInfo {
@@ -76,25 +82,27 @@ public class PaymentInfo {
     private String selectedBrand;
 
     // Account Info
-    private String accountAgeIndicator;
-    private String accountChangeDate;
-    private String accountChangeIndicator;
-    private String accountCreationDate;
-    private String passwordChangeDate;
-    private String passwordChangeDateIndicator;
-    private Integer purchasesLast6Months;
+    private ThreeDS2TimeFrameWithNotApplicable accountAgeIndicator;
+    private XMLGregorianCalendar accountChangeDate;
+    private ThreeDS2TimeFrame accountChangeIndicator;
+    private XMLGregorianCalendar accountCreationDate;
     private Integer addCardAttemptsDay;
-    private Integer pastTransactionsDay;
-    private Integer pastTransactionsYear;
-    private String paymentAccountAge;
-    private String paymentAccountIndicator;
-    private String deliveryAddressUsageDate;
-    private String deliveryAddressUsageIndicator;
-    private Boolean suspiciousActivity;
+    private XMLGregorianCalendar deliveryAddressUsageDate;
+    private ThreeDS2TimeFrame deliveryAddressUsageIndicator;
     private String homePhone;
     private String mobilePhone;
+    private XMLGregorianCalendar passwordChangeDate;
+    private ThreeDS2TimeFrameWithNotApplicable passwordChangeIndicator;
+    private Integer pastTransactionsDay;
+    private Integer pastTransactionsYear;
+    private XMLGregorianCalendar paymentAccountAge;
+    private ThreeDS2TimeFrameWithNotApplicable paymentAccountIndicator;
+    private Integer purchasesLast6Months;
+    private Boolean suspiciousActivity;
     private String workPhone;
-    //passwordChangeIndicator AccountInfo Model Data
+    private String passwordChangeDateIndicator;
+
+
 
     public Integer getCaptureDelayHours() {
         return captureDelayHours;
@@ -458,53 +466,14 @@ public class PaymentInfo {
         this.selectedBrand = selectedBrand;
     }
 
-    public String getAccountAgeIndicator() {
+    public ThreeDS2TimeFrameWithNotApplicable getAccountAgeIndicator() {
         return accountAgeIndicator;
     }
 
-    public void setAccountAgeIndicator(String accountAgeIndicator) {
+    public void setAccountAgeIndicator(ThreeDS2TimeFrameWithNotApplicable accountAgeIndicator) {
         this.accountAgeIndicator = accountAgeIndicator;
     }
 
-    public String getAccountChangeDate() {
-        return accountChangeDate;
-    }
-
-    public void setAccountChangeDate(String accountChangeDate) {
-        this.accountChangeDate = accountChangeDate;
-    }
-
-    public String getAccountChangeIndicator() {
-        return accountChangeIndicator;
-    }
-
-    public void setAccountChangeIndicator(String accountChangeIndicator) {
-        this.accountChangeIndicator = accountChangeIndicator;
-    }
-
-    public String getAccountCreationDate() {
-        return accountCreationDate;
-    }
-
-    public void setAccountCreationDate(String accountCreationDate) {
-        this.accountCreationDate = accountCreationDate;
-    }
-
-    public String getPasswordChangeDate() {
-        return passwordChangeDate;
-    }
-
-    public void setPasswordChangeDate(String passwordChangeDate) {
-        this.passwordChangeDate = passwordChangeDate;
-    }
-
-    public String getPasswordChangeDateIndicator() {
-        return passwordChangeDateIndicator;
-    }
-
-    public void setPasswordChangeDateIndicator(String passwordChangeDateIndicator) {
-        this.passwordChangeDateIndicator = passwordChangeDateIndicator;
-    }
 
     public Integer getPurchasesLast6Months() {
         return purchasesLast6Months;
@@ -538,37 +507,6 @@ public class PaymentInfo {
         this.pastTransactionsYear = pastTransactionsYear;
     }
 
-    public String getPaymentAccountAge() {
-        return paymentAccountAge;
-    }
-
-    public void setPaymentAccountAge(String paymentAccountAge) {
-        this.paymentAccountAge = paymentAccountAge;
-    }
-
-    public String getPaymentAccountIndicator() {
-        return paymentAccountIndicator;
-    }
-
-    public void setPaymentAccountIndicator(String paymentAccountIndicator) {
-        this.paymentAccountIndicator = paymentAccountIndicator;
-    }
-
-    public String getDeliveryAddressUsageDate() {
-        return deliveryAddressUsageDate;
-    }
-
-    public void setDeliveryAddressUsageDate(String deliveryAddressUsageDate) {
-        this.deliveryAddressUsageDate = deliveryAddressUsageDate;
-    }
-
-    public String getDeliveryAddressUsageIndicator() {
-        return deliveryAddressUsageIndicator;
-    }
-
-    public void setDeliveryAddressUsageIndicator(String deliveryAddressUsageIndicator) {
-        this.deliveryAddressUsageIndicator = deliveryAddressUsageIndicator;
-    }
 
     public Boolean getSuspiciousActivity() {
         return suspiciousActivity;
@@ -600,6 +538,86 @@ public class PaymentInfo {
 
     public void setWorkPhone(String workPhone) {
         this.workPhone = workPhone;
+    }
+
+    public XMLGregorianCalendar getAccountChangeDate() {
+        return accountChangeDate;
+    }
+
+    public void setAccountChangeDate(XMLGregorianCalendar accountChangeDate) {
+        this.accountChangeDate = accountChangeDate;
+    }
+
+    public ThreeDS2TimeFrame getAccountChangeIndicator() {
+        return accountChangeIndicator;
+    }
+
+    public void setAccountChangeIndicator(ThreeDS2TimeFrame accountChangeIndicator) {
+        this.accountChangeIndicator = accountChangeIndicator;
+    }
+
+    public XMLGregorianCalendar getAccountCreationDate() {
+        return accountCreationDate;
+    }
+
+    public void setAccountCreationDate(XMLGregorianCalendar accountCreationDate) {
+        this.accountCreationDate = accountCreationDate;
+    }
+
+    public XMLGregorianCalendar getDeliveryAddressUsageDate() {
+        return deliveryAddressUsageDate;
+    }
+
+    public void setDeliveryAddressUsageDate(XMLGregorianCalendar deliveryAddressUsageDate) {
+        this.deliveryAddressUsageDate = deliveryAddressUsageDate;
+    }
+
+    public ThreeDS2TimeFrame getDeliveryAddressUsageIndicator() {
+        return deliveryAddressUsageIndicator;
+    }
+
+    public void setDeliveryAddressUsageIndicator(ThreeDS2TimeFrame deliveryAddressUsageIndicator) {
+        this.deliveryAddressUsageIndicator = deliveryAddressUsageIndicator;
+    }
+
+    public XMLGregorianCalendar getPasswordChangeDate() {
+        return passwordChangeDate;
+    }
+
+    public void setPasswordChangeDate(XMLGregorianCalendar passwordChangeDate) {
+        this.passwordChangeDate = passwordChangeDate;
+    }
+
+    public ThreeDS2TimeFrameWithNotApplicable getPasswordChangeIndicator() {
+        return passwordChangeIndicator;
+    }
+
+    public void setPasswordChangeIndicator(ThreeDS2TimeFrameWithNotApplicable passwordChangeIndicator) {
+        this.passwordChangeIndicator = passwordChangeIndicator;
+    }
+
+    public XMLGregorianCalendar getPaymentAccountAge() {
+        return paymentAccountAge;
+    }
+
+    public void setPaymentAccountAge(XMLGregorianCalendar paymentAccountAge) {
+        this.paymentAccountAge = paymentAccountAge;
+    }
+
+    public ThreeDS2TimeFrameWithNotApplicable getPaymentAccountIndicator() {
+        return paymentAccountIndicator;
+    }
+
+    public void setPaymentAccountIndicator(ThreeDS2TimeFrameWithNotApplicable paymentAccountIndicator) {
+        this.paymentAccountIndicator = paymentAccountIndicator;
+    }
+
+    public String getPasswordChangeDateIndicator() {
+        return passwordChangeDateIndicator;
+    }
+
+    public void setPasswordChangeDateIndicator(String passwordChangeDateIndicator) {
+        this.passwordChangeDateIndicator = passwordChangeDateIndicator;
     }
 
     //TODO: regenerate

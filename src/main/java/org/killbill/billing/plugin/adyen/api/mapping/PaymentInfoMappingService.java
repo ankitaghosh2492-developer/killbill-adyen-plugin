@@ -21,7 +21,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Nullable;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.killbill.adyen.threeds2data.ThreeDS2TimeFrame;
+import org.killbill.adyen.threeds2data.ThreeDS2TimeFrameWithNotApplicable;
 import org.killbill.billing.account.api.AccountData;
 import org.killbill.billing.payment.api.PluginProperty;
 import org.killbill.billing.plugin.adyen.client.AdyenConfigProperties;
@@ -87,19 +92,31 @@ public abstract class PaymentInfoMappingService {
 
     private static void set3DS2AccountInfo(final PaymentInfo paymentInfo, final Iterable<PluginProperty> properties){
         final String accountAgeIndicator = PluginProperties.findPluginPropertyValue(ACCOUNT_AGE_INDICATOR,properties);
-        paymentInfo.setAccountAgeIndicator(accountAgeIndicator);
+        paymentInfo.setAccountAgeIndicator(ThreeDS2TimeFrameWithNotApplicable.NOT_APPLICABLE);
 
         final String accountChangeDate = PluginProperties.findPluginPropertyValue(ACCOUNT_CHANGE_DATE,properties);
-        paymentInfo.setAccountChangeDate(accountChangeDate);
+        try {
+            paymentInfo.setAccountChangeDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(accountChangeDate));
+        } catch (DatatypeConfigurationException e) {
+            e.printStackTrace();
+        }
 
         final String accountChangeIndicator = PluginProperties.findPluginPropertyValue(ACCOUNT_CHANGE_INDICATOR,properties);
-        paymentInfo.setAccountChangeIndicator(accountChangeIndicator);
+        paymentInfo.setAccountChangeIndicator(ThreeDS2TimeFrame.THIS_TRANSACTION);
 
         final String accountCreationDate = PluginProperties.findPluginPropertyValue(ACCOUNT_CREATION_DATE,properties);
-        paymentInfo.setAccountCreationDate(accountCreationDate);
+        try {
+            paymentInfo.setAccountCreationDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(accountCreationDate));
+        } catch (DatatypeConfigurationException e) {
+            e.printStackTrace();
+        }
 
         final String passwordChangeDate = PluginProperties.findPluginPropertyValue(PASSWORD_CHANGE_DATE,properties);
-        paymentInfo.setPasswordChangeDate(passwordChangeDate);
+        try {
+            paymentInfo.setPasswordChangeDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(passwordChangeDate));
+        } catch (DatatypeConfigurationException e) {
+            e.printStackTrace();
+        }
 
         final String passwordChangeDateIndicator = PluginProperties.findPluginPropertyValue(PASSWORD_CHANGE_DATE_INDICATOR,properties);
         paymentInfo.setPasswordChangeDateIndicator(passwordChangeDateIndicator);
@@ -125,16 +142,24 @@ public abstract class PaymentInfoMappingService {
         }
 
         final String paymentAccountAge = PluginProperties.findAndDecodePluginPropertyValue(PAYMENT_ACCOUNT_AGE,properties);
-        paymentInfo.setPaymentAccountAge(paymentAccountAge);
+        try {
+            paymentInfo.setPaymentAccountAge(DatatypeFactory.newInstance().newXMLGregorianCalendar(paymentAccountAge));
+        } catch (DatatypeConfigurationException e) {
+            e.printStackTrace();
+        }
 
         final String paymentAccountIndicator = PluginProperties.findAndDecodePluginPropertyValue(PAYMENT_ACCOUNT_INDICATOR,properties);
-        paymentInfo.setPaymentAccountIndicator(paymentAccountIndicator);
+        paymentInfo.setPaymentAccountIndicator(ThreeDS2TimeFrameWithNotApplicable.NOT_APPLICABLE);
 
         final String deliveryAddressUsageDate = PluginProperties.findAndDecodePluginPropertyValue(DELIVERY_ADDRESS_USAGE_DATE,properties);
-        paymentInfo.setDeliveryAddressUsageDate(deliveryAddressUsageDate);
+        try {
+            paymentInfo.setDeliveryAddressUsageDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(deliveryAddressUsageDate));
+        } catch (DatatypeConfigurationException e) {
+            e.printStackTrace();
+        }
 
         final String deliveryAddressUsageIndicator = PluginProperties.findAndDecodePluginPropertyValue(DELIVERY_ADDRESS_USAGE_INDICATOR,properties);
-        paymentInfo.setDeliveryAddressUsageIndicator(deliveryAddressUsageIndicator);
+        paymentInfo.setDeliveryAddressUsageIndicator(ThreeDS2TimeFrame.THIS_TRANSACTION);
 
         final String suspiciousActivity = PluginProperties.findAndDecodePluginPropertyValue(SUSPICIOUS_ACTIVITY,properties);
         paymentInfo.setSuspiciousActivity(Boolean.valueOf(suspiciousActivity));

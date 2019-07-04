@@ -21,8 +21,7 @@ import org.killbill.adyen.common.*;
 import org.killbill.adyen.payment.AnyType2AnyTypeMap;
 import org.killbill.adyen.payment.PaymentRequest3Ds2;
 import org.killbill.adyen.payment.Recurring;
-import org.killbill.adyen.threeds2data.ChallengeIndicator;
-import org.killbill.adyen.threeds2data.ThreeDS2RequestData;
+import org.killbill.adyen.threeds2data.*;
 import org.killbill.billing.plugin.adyen.client.model.PaymentData;
 import org.killbill.billing.plugin.adyen.client.model.PaymentInfo;
 import org.killbill.billing.plugin.adyen.client.model.SplitSettlementData;
@@ -78,7 +77,7 @@ public class PaymentRequest3Ds2Builder extends RequestBuilder<PaymentRequest3Ds2
         set3DS2Fields();
         setSplitSettlementData();
         addAdditionalData(request.getAdditionalData(), additionalData);
-
+        setAccountInfo();
         return request;
     }
 
@@ -122,6 +121,30 @@ public class PaymentRequest3Ds2Builder extends RequestBuilder<PaymentRequest3Ds2
         if (browserInfo.getAcceptHeader() != null || browserInfo.getUserAgent() != null) {
             request.setBrowserInfo(browserInfo);
         }
+    }
+
+    private void setAccountInfo(){
+        final PaymentInfo paymentInfo = paymentData.getPaymentInfo();
+        final AccountInfo accountInfo = new AccountInfo();
+        accountInfo.setAccountAgeIndicator(paymentInfo.getAccountAgeIndicator());
+        accountInfo.setAccountChangeDate(paymentInfo.getAccountChangeDate());
+        accountInfo.setAccountChangeIndicator(paymentInfo.getAccountChangeIndicator());
+        accountInfo.setAccountCreationDate(paymentInfo.getAccountCreationDate());
+        accountInfo.setAddCardAttemptsDay(paymentInfo.getAddCardAttemptsDay());
+        accountInfo.setDeliveryAddressUsageDate(paymentInfo.getDeliveryAddressUsageDate());
+        accountInfo.setDeliveryAddressUsageIndicator(paymentInfo.getDeliveryAddressUsageIndicator());
+        accountInfo.setHomePhone(paymentInfo.getHomePhone());
+        accountInfo.setMobilePhone(paymentInfo.getMobilePhone());
+        accountInfo.setPasswordChangeDate(paymentInfo.getPasswordChangeDate());
+        accountInfo.setPasswordChangeIndicator(paymentInfo.getPasswordChangeIndicator());
+        accountInfo.setPastTransactionsDay(paymentInfo.getPastTransactionsDay());
+        accountInfo.setPastTransactionsYear(paymentInfo.getPastTransactionsYear());
+        accountInfo.setPaymentAccountAge(paymentInfo.getPaymentAccountAge());
+        accountInfo.setPaymentAccountIndicator(paymentInfo.getPaymentAccountIndicator());
+        accountInfo.setPurchasesLast6Months(paymentInfo.getPurchasesLast6Months());
+        accountInfo.setSuspiciousActivity(paymentInfo.getSuspiciousActivity());
+        accountInfo.setWorkPhone(paymentInfo.getWorkPhone());
+        accountInfo.setPasswordChangeIndicator(paymentInfo.getPasswordChangeIndicator());
     }
 
     private void setRecurring() {

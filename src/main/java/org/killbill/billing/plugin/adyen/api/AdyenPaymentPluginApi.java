@@ -156,7 +156,7 @@ public class AdyenPaymentPluginApi extends PluginPaymentPluginApi<AdyenResponses
     // 3-D Secure v2
     public static final String PROPERTY_NOTIFICATION_URL = "threeDSMethodNotificationURL";
     public static final String PROPERTY_METHOD_NOTIFICATION_URL = "threeDSMethodNotificationURL";
-    public static final String PROPERTY_THREEDS_SERVER_TRANS_ID = "threeds2.threeDSServerTransID";
+    public static final String PROPERTY_THREEDS_SERVER_TRANS_ID = "threeds2.threeDS2ResponseData.threeDSServerTransID";
     public static final String PROPERTY_THREEDS2_TOKEN = "threeds2.threeDS2Token";
     public static final String PROPERTY_THREEDS_METHOD_URL = "threeds2.threeDSMethodURL";
     public static final String PROPERTY_ACS_TRANS_ID = "threeds2.threeDS2ResponseData.acsTransID";
@@ -238,7 +238,7 @@ public class AdyenPaymentPluginApi extends PluginPaymentPluginApi<AdyenResponses
     public static final String BRAND_APPLEPAY = "applepay";
     public static final String BRAND_PAYWITHGOOGLE = "paywithgoogle";
 
-    //3DS Account Info
+    //3DS2 Shopper Account Info
     public static final String ACCOUNT_AGE_INDICATOR = "accountAgeIndicator";
     public static final String ACCOUNT_CHANGE_DATE = "accountChangeDate";
     public static final String ACCOUNT_CHANGE_INDICATOR = "accountChangeIndicator";
@@ -257,6 +257,7 @@ public class AdyenPaymentPluginApi extends PluginPaymentPluginApi<AdyenResponses
     public static final String HOME_PHONE = "homePhone";
     public static final String MOBILE_PHONE = "mobilePhone";
     public static final String WORK_PHONE = "workPhone";
+    public static final String passwordChangeIndicator = "passwordChangeIndicator";
 
     private static final Logger logger = LoggerFactory.getLogger(AdyenPaymentPluginApi.class);
     private static final List<PaymentServiceProviderResult> PAYMENT_RESULT_TO_CANCEL_IN_HPP_COMPLETE = ImmutableList.of(PaymentServiceProviderResult.CANCELLED,

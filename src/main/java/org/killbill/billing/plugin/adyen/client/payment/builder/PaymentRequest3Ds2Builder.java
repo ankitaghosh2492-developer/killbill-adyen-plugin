@@ -21,8 +21,7 @@ import org.killbill.adyen.common.*;
 import org.killbill.adyen.payment.AnyType2AnyTypeMap;
 import org.killbill.adyen.payment.PaymentRequest3Ds2;
 import org.killbill.adyen.payment.Recurring;
-import org.killbill.adyen.threeds2data.ChallengeIndicator;
-import org.killbill.adyen.threeds2data.ThreeDS2RequestData;
+import org.killbill.adyen.threeds2data.*;
 import org.killbill.billing.plugin.adyen.client.model.PaymentData;
 import org.killbill.billing.plugin.adyen.client.model.PaymentInfo;
 import org.killbill.billing.plugin.adyen.client.model.SplitSettlementData;
@@ -78,8 +77,82 @@ public class PaymentRequest3Ds2Builder extends RequestBuilder<PaymentRequest3Ds2
         set3DS2Fields();
         setSplitSettlementData();
         addAdditionalData(request.getAdditionalData(), additionalData);
-
+        setAccountInfo();
         return request;
+    }
+
+    private void setAccountInfo(){
+        final AccountInfo accountInfo = new AccountInfo();
+        accountInfo.setAccountAgeIndicator(ThreeDS2TimeFrameWithNotApplicable.fromValue(userData.getAccountAgeIndicator()));
+
+        if (userData.getAccountChangeDate() != null) {
+            final XMLGregorianCalendar xgc;
+            try {
+                xgc = DatatypeFactory.newInstance().newXMLGregorianCalendar(userData.getAccountChangeDate().toGregorianCalendar());
+                accountInfo.setAccountChangeDate(xgc);
+            } catch (final DatatypeConfigurationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        accountInfo.setAccountChangeIndicator(ThreeDS2TimeFrame.fromValue(userData.getAccountChangeIndicator()));
+
+        if (userData.getAccountCreationDate() != null) {
+            final XMLGregorianCalendar xgc;
+            try {
+                xgc = DatatypeFactory.newInstance().newXMLGregorianCalendar(userData.getAccountCreationDate().toGregorianCalendar());
+                accountInfo.setAccountCreationDate(xgc);
+            } catch (final DatatypeConfigurationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        accountInfo.setAddCardAttemptsDay(userData.getAddCardAttemptsDay());
+
+        if (userData.getDeliveryAddressUsageDate() != null) {
+            final XMLGregorianCalendar xgc;
+            try {
+                xgc = DatatypeFactory.newInstance().newXMLGregorianCalendar(userData.getDeliveryAddressUsageDate().toGregorianCalendar());
+                accountInfo.setDeliveryAddressUsageDate(xgc);
+            } catch (final DatatypeConfigurationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        accountInfo.setDeliveryAddressUsageIndicator(ThreeDS2TimeFrame.fromValue(userData.getDeliveryAddressUsageIndicator()));
+        accountInfo.setHomePhone(userData.getHomePhone());
+        accountInfo.setMobilePhone(userData.getMobilePhone());
+
+        if (userData.getPasswordChangeDate() != null) {
+            final XMLGregorianCalendar xgc;
+            try {
+                xgc = DatatypeFactory.newInstance().newXMLGregorianCalendar(userData.getPasswordChangeDate().toGregorianCalendar());
+                accountInfo.setPasswordChangeDate(xgc);
+            } catch (final DatatypeConfigurationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        accountInfo.setPasswordChangeIndicator(ThreeDS2TimeFrameWithNotApplicable.fromValue(userData.getPasswordChangeIndicator()));
+        accountInfo.setPastTransactionsDay(userData.getPastTransactionsDay());
+        accountInfo.setPastTransactionsYear(userData.getPastTransactionsYear());
+
+        if (userData.getPaymentAccountAge() != null) {
+            final XMLGregorianCalendar xgc;
+            try {
+                xgc = DatatypeFactory.newInstance().newXMLGregorianCalendar(userData.getPaymentAccountAge().toGregorianCalendar());
+                accountInfo.setPaymentAccountAge(xgc);
+            } catch (final DatatypeConfigurationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        accountInfo.setPaymentAccountIndicator(ThreeDS2TimeFrameWithNotApplicable.fromValue(userData.getPaymentAccountIndicator()));
+        accountInfo.setPurchasesLast6Months(userData.getPurchasesLast6Months());
+        accountInfo.setSuspiciousActivity(userData.getSuspiciousActivity());
+        accountInfo.setWorkPhone(userData.getWorkPhone());
+        accountInfo.setPasswordChangeIndicator(ThreeDS2TimeFrameWithNotApplicable.fromValue(userData.getPasswordChangeIndicator()));
+        request.setAccountInfo(accountInfo);
     }
 
     private void setAmount() {

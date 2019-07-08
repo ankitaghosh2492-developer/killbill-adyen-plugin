@@ -82,6 +82,27 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
             .put(TransactionType.AUTHORIZE, "AUTHORISATION")
             .put(TransactionType.PURCHASE, "AUTHORISATION")
             .build();
+    private static final Map<String,String> three3DSAccountInfo = ImmutableMap.<String,String>builder()
+            .put(AdyenPaymentPluginApi.ACCOUNT_AGE_INDICATOR,"notApplicable")
+            .put(AdyenPaymentPluginApi.ACCOUNT_CHANGE_DATE, "2019-05-07T17:05:45.678Z")
+            .put(AdyenPaymentPluginApi.ACCOUNT_CHANGE_INDICATOR,"thisTransaction")
+            .put(AdyenPaymentPluginApi.ACCOUNT_CREATION_DATE,"2009-05-07T17:05:45.678Z")
+            .put(AdyenPaymentPluginApi.PASSWORD_CHANGE_DATE,"2009-05-07T17:05:45.678Z")
+            .put(AdyenPaymentPluginApi.PASSWORD_CHANGE_DATE_INDICATOR, "notApplicable")
+            .put(AdyenPaymentPluginApi.PURCHASES_LAST_6_MONTHS, String.valueOf(10))
+            .put(AdyenPaymentPluginApi.ADD_CARD_ATTEMPTS_DAY, String.valueOf(1))
+            .put(AdyenPaymentPluginApi.PAST_TRANSACTIONS_DAY, String.valueOf(1))
+            .put(AdyenPaymentPluginApi.PAST_TRANSACTIONS_YEAR, String.valueOf(1))
+            .put(AdyenPaymentPluginApi.PAYMENT_ACCOUNT_AGE, String.valueOf(1111))
+            .put(AdyenPaymentPluginApi.PAYMENT_ACCOUNT_INDICATOR, "notApplicable")
+            .put(AdyenPaymentPluginApi.DELIVERY_ADDRESS_USAGE_DATE,"2009-05-07T17:05:45.678Z")
+            .put(AdyenPaymentPluginApi.DELIVERY_ADDRESS_USAGE_INDICATOR, "thisTransaction")
+            .put(AdyenPaymentPluginApi.SUSPICIOUS_ACTIVITY, "false")
+            .put(AdyenPaymentPluginApi.HOME_PHONE, "8111234567")
+            .put(AdyenPaymentPluginApi.WORK_PHONE,"8111234567")
+            .put(AdyenPaymentPluginApi.MOBILE_PHONE, "8111234567")
+            .build();
+
     private static final Map<String, String> three3DSbrowserInfo = ImmutableMap.<String, String>builder()
             .put(AdyenPaymentPluginApi.PROPERTY_USER_AGENT, "Java/1.8")
             .put(AdyenPaymentPluginApi.PROPERTY_ACCEPT_HEADER, "application/json")
@@ -338,7 +359,7 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
 
     @Test(groups = "integration")
     public void testAuthorizeAndMultipleCapturesSepaDirectDebit() throws Exception {
-        adyenPaymentPluginApi.addPaymentMethod(account.getId(), account.getPaymentMethodId(), adyenPaymentMethodPluginSepaDirectDebit(), true, ImmutableList.<PluginProperty>of(), context);
+        adyenPaymentPluginApi.addPaymentMethod(account.getId(), account.getPaymentMethodId(), adyenPaymentMethodPluginSepaDirectDebit(), true, propertiesFor3DS2ChallengeShopper, context);
 
         final Payment payment = doAuthorize(BigDecimal.TEN);
         doCapture(payment, new BigDecimal("5"));
@@ -381,8 +402,9 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
         final Iterable<PluginProperty> propertiesWithCCForRecurring = PluginProperties.buildPluginProperties(propertiesForRecurring);
         adyenPaymentPluginApi.addPaymentMethod(account.getId(), account.getPaymentMethodId(), adyenEmptyPaymentMethodPlugin(), true, propertiesWithCCForRecurring, context);
 
-        final Payment payment = doAuthorize(BigDecimal.TEN, PluginProperties.merge(ImmutableMap.<String, String>of(AdyenPaymentPluginApi.PROPERTY_CC_VERIFICATION_VALUE, CC_VERIFICATION_VALUE,
-                                                                                                                   AdyenPaymentPluginApi.PROPERTY_RECURRING_TYPE, "RECURRING"),
+        final Payment payment = doAuthorize(BigDecimal.TEN,
+                PluginProperties.merge(ImmutableMap.<String, String>of(AdyenPaymentPluginApi.PROPERTY_CC_VERIFICATION_VALUE, CC_VERIFICATION_VALUE,
+                                                          AdyenPaymentPluginApi.PROPERTY_RECURRING_TYPE, "RECURRING"),
                                                                                    propertiesWithCCInfo));
         doCapture(payment, BigDecimal.TEN);
         doRefund(payment, BigDecimal.TEN);
@@ -401,6 +423,7 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
                                                                                                           .putAll(propertiesForRecurring)
                                                                                                           .put(AdyenPaymentPluginApi.PROPERTY_RECURRING_DETAIL_ID, recurringDetailList.get(0).getRecurringDetailReference())
                                                                                                           .put(AdyenPaymentPluginApi.PROPERTY_RECURRING_TYPE, "RECURRING")
+                                                                                                          .putAll(three3DSAccountInfo)
                                                                                                           .build());
         final Payment payment2 = doAuthorize(BigDecimal.TEN, propertiesWithRecurringDetailInfo);
         doCapture(payment2, BigDecimal.TEN);
@@ -792,7 +815,7 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
         assertEquals(adyenInfoObj2.getAdyenResponseRecord().get().getResultCode(), "ChallengeShopper");
 
         final String messageVersion = PluginProperties.findPluginPropertyValue(PROPERTY_RESPONSE_MESSAGE_VERSION, authorizationInfoPlugin2.getProperties());
-        final String transId = PluginProperties.findPluginPropertyValue(PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID, authorizationInfoPlugin2.getProperties());
+        final String transId = PluginProperties.findPluginPropertyValue(PROPERTY_THREEDS_SERVER_TRANS_ID, authorizationInfoPlugin2.getProperties());
         final String acsTransId = PluginProperties.findPluginPropertyValue(PROPERTY_ACS_TRANS_ID, authorizationInfoPlugin2.getProperties());
 
 
@@ -859,7 +882,7 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
         final String threeDS2Token = PluginProperties.findPluginPropertyValue(PROPERTY_THREEDS2_TOKEN, authorizationInfoPlugin1.getProperties());
         final String acsTransID = PluginProperties.findPluginPropertyValue(PROPERTY_ACS_TRANS_ID, authorizationInfoPlugin1.getProperties());
         final String acsURL = PluginProperties.findPluginPropertyValue(PROPERTY_ACS_URL, authorizationInfoPlugin1.getProperties());
-        final String messageVersion = PluginProperties.findPluginPropertyValue(PROPERTY_MESSAGE_VERSION, authorizationInfoPlugin1.getProperties());
+        final String messageVersion = PluginProperties.findPluginPropertyValue(PROPERTY_RESPONSE_MESSAGE_VERSION, authorizationInfoPlugin1.getProperties());
 
         assertNull(authorizationInfoPlugin1.getGatewayErrorCode());
         assertNotNull(threeDSServerTransID);

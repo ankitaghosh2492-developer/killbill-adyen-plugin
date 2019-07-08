@@ -19,8 +19,10 @@ package org.killbill.billing.plugin.adyen.api.mapping;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
+import com.google.common.collect.ImmutableMap;
 import org.killbill.billing.account.api.Account;
 import org.killbill.billing.payment.api.PluginProperty;
 import org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi;
@@ -344,7 +346,25 @@ public class UserDataMappingServiceTest {
                 new PluginProperty(AdyenPaymentPluginApi.PROPERTY_EMAIL, customerEmailProperty, false),
                 new PluginProperty(AdyenPaymentPluginApi.PROPERTY_FIRST_NAME,  customerFirstNameProperty, false),
                 new PluginProperty(AdyenPaymentPluginApi.PROPERTY_LAST_NAME,  customerLastNameProperty, false),
-                new PluginProperty(AdyenPaymentPluginApi.PROPERTY_IP, customerIpProperty, false));
+                new PluginProperty(AdyenPaymentPluginApi.PROPERTY_IP, customerIpProperty, false),
+                new PluginProperty(AdyenPaymentPluginApi.ACCOUNT_AGE_INDICATOR,"notApplicable" , false),
+                new PluginProperty(AdyenPaymentPluginApi.ACCOUNT_CHANGE_DATE, "2019-05-07T17:05:45.678Z", false),
+                new PluginProperty(AdyenPaymentPluginApi.ACCOUNT_CHANGE_INDICATOR,"thisTransaction", false),
+                new PluginProperty(AdyenPaymentPluginApi.ACCOUNT_CREATION_DATE,"2009-05-07T17:05:45.678Z", false),
+                new PluginProperty(AdyenPaymentPluginApi.PASSWORD_CHANGE_DATE,"2009-05-07T17:05:45.678Z", false),
+                new PluginProperty(AdyenPaymentPluginApi.PASSWORD_CHANGE_DATE_INDICATOR, "notApplicable", false),
+                new PluginProperty(AdyenPaymentPluginApi.PURCHASES_LAST_6_MONTHS, String.valueOf(10), false),
+                new PluginProperty(AdyenPaymentPluginApi.ADD_CARD_ATTEMPTS_DAY, String.valueOf(1), false),
+                new PluginProperty(AdyenPaymentPluginApi.PAST_TRANSACTIONS_DAY, String.valueOf(1), false),
+                new PluginProperty(AdyenPaymentPluginApi.PAST_TRANSACTIONS_YEAR, String.valueOf(1), false),
+                new PluginProperty(AdyenPaymentPluginApi.PAYMENT_ACCOUNT_AGE, String.valueOf(1111), false),
+                new PluginProperty(AdyenPaymentPluginApi.PAYMENT_ACCOUNT_INDICATOR, "notApplicable", false),
+                new PluginProperty(AdyenPaymentPluginApi.DELIVERY_ADDRESS_USAGE_DATE,"2009-05-07T17:05:45.678Z", false),
+                new PluginProperty(AdyenPaymentPluginApi.DELIVERY_ADDRESS_USAGE_INDICATOR, "thisTransaction", false),
+                new PluginProperty(AdyenPaymentPluginApi.SUSPICIOUS_ACTIVITY, "false", false),
+                new PluginProperty(AdyenPaymentPluginApi.HOME_PHONE, "8111234567", false),
+                new PluginProperty(AdyenPaymentPluginApi.WORK_PHONE,"8111234567", false),
+                new PluginProperty(AdyenPaymentPluginApi.MOBILE_PHONE, "8111234567", false));
 
         final UserData userData = UserDataMappingService.toUserData(null, pluginProperties);
         assertEquals(userData.getShopperReference(), customerIdProperty);
@@ -372,7 +392,26 @@ public class UserDataMappingServiceTest {
         final String customerIpProperty = "1.2.3.4";
 
         final List<PluginProperty> pluginProperties =
-                ImmutableList.of(new PluginProperty(AdyenPaymentPluginApi.PROPERTY_IP, customerIpProperty, false));
+                ImmutableList.of(new PluginProperty(AdyenPaymentPluginApi.PROPERTY_IP, customerIpProperty, false),
+                new PluginProperty(AdyenPaymentPluginApi.ACCOUNT_AGE_INDICATOR,"notApplicable" , false),
+                new PluginProperty(AdyenPaymentPluginApi.ACCOUNT_CHANGE_DATE, "2019-05-07T17:05:45.678Z", false),
+                new PluginProperty(AdyenPaymentPluginApi.ACCOUNT_CHANGE_INDICATOR,"thisTransaction", false),
+                new PluginProperty(AdyenPaymentPluginApi.ACCOUNT_CREATION_DATE,"2009-05-07T17:05:45.678Z", false),
+                new PluginProperty(AdyenPaymentPluginApi.PASSWORD_CHANGE_DATE,"2009-05-07T17:05:45.678Z", false),
+                new PluginProperty(AdyenPaymentPluginApi.PASSWORD_CHANGE_DATE_INDICATOR, "notApplicable", false),
+                new PluginProperty(AdyenPaymentPluginApi.PURCHASES_LAST_6_MONTHS, String.valueOf(10), false),
+                new PluginProperty(AdyenPaymentPluginApi.ADD_CARD_ATTEMPTS_DAY, String.valueOf(1), false),
+                new PluginProperty(AdyenPaymentPluginApi.PAST_TRANSACTIONS_DAY, String.valueOf(1), false),
+                new PluginProperty(AdyenPaymentPluginApi.PAST_TRANSACTIONS_YEAR, String.valueOf(1), false),
+                new PluginProperty(AdyenPaymentPluginApi.PAYMENT_ACCOUNT_AGE, String.valueOf(1111), false),
+                new PluginProperty(AdyenPaymentPluginApi.PAYMENT_ACCOUNT_INDICATOR, "notApplicable", false),
+                new PluginProperty(AdyenPaymentPluginApi.DELIVERY_ADDRESS_USAGE_DATE,"2009-05-07T17:05:45.678Z", false),
+                new PluginProperty(AdyenPaymentPluginApi.DELIVERY_ADDRESS_USAGE_INDICATOR, "thisTransaction", false),
+                new PluginProperty(AdyenPaymentPluginApi.SUSPICIOUS_ACTIVITY, "false", false),
+                new PluginProperty(AdyenPaymentPluginApi.HOME_PHONE, "8111234567", false),
+                new PluginProperty(AdyenPaymentPluginApi.WORK_PHONE,"8111234567", false),
+                new PluginProperty(AdyenPaymentPluginApi.MOBILE_PHONE, "8111234567", false));
+
 
         final UserData userData = UserDataMappingService.toUserData(account, pluginProperties);
         assertEquals(userData.getShopperReference(), externalKey);
@@ -395,5 +434,6 @@ public class UserDataMappingServiceTest {
         assertEquals(userData.getFirstName(), null);
         assertEquals(userData.getLastName(), null);
         assertEquals(userData.getShopperIP(), null);
+        assertEquals(userData.getAccountAgeIndicator(), null);
     }
 }

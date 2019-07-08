@@ -22,6 +22,7 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import org.joda.time.DateTime;
 import org.killbill.billing.account.api.AccountData;
 import org.killbill.billing.payment.api.PluginProperty;
 import org.killbill.billing.plugin.adyen.client.AdyenConfigProperties;
@@ -80,75 +81,9 @@ public abstract class PaymentInfoMappingService {
         setInstallments(paymentInfo, properties);
         setSelectedBrand(paymentInfo, properties);
         setAcquirer(configuration, paymentInfo, properties);
-        set3DS2AccountInfo(paymentInfo, properties);
 
         return paymentInfo;
     }
-
-    private static void set3DS2AccountInfo(final PaymentInfo paymentInfo, final Iterable<PluginProperty> properties){
-        final String accountAgeIndicator = PluginProperties.findPluginPropertyValue(ACCOUNT_AGE_INDICATOR,properties);
-        paymentInfo.setAccountAgeIndicator(accountAgeIndicator);
-
-        final String accountChangeDate = PluginProperties.findPluginPropertyValue(ACCOUNT_CHANGE_DATE,properties);
-        paymentInfo.setAccountChangeDate(accountChangeDate);
-
-        final String accountChangeIndicator = PluginProperties.findPluginPropertyValue(ACCOUNT_CHANGE_INDICATOR,properties);
-        paymentInfo.setAccountChangeIndicator(accountChangeIndicator);
-
-        final String accountCreationDate = PluginProperties.findPluginPropertyValue(ACCOUNT_CREATION_DATE,properties);
-        paymentInfo.setAccountCreationDate(accountCreationDate);
-
-        final String passwordChangeDate = PluginProperties.findPluginPropertyValue(PASSWORD_CHANGE_DATE,properties);
-        paymentInfo.setPasswordChangeDate(passwordChangeDate);
-
-        final String passwordChangeDateIndicator = PluginProperties.findPluginPropertyValue(PASSWORD_CHANGE_DATE_INDICATOR,properties);
-        paymentInfo.setPasswordChangeDateIndicator(passwordChangeDateIndicator);
-
-        final String purchasesLast6Months = PluginProperties.findPluginPropertyValue(PURCHASES_LAST_6_MONTHS,properties);
-        if(purchasesLast6Months != null) {
-            paymentInfo.setPurchasesLast6Months(Integer.valueOf(purchasesLast6Months));
-        }
-
-        final String addCardAttemptsDay = PluginProperties.findAndDecodePluginPropertyValue(ADD_CARD_ATTEMPTS_DAY,properties);
-        if(addCardAttemptsDay != null) {
-            paymentInfo.setAddCardAttemptsDay(Integer.valueOf(addCardAttemptsDay));
-        }
-
-        final String pastTransactionsDay = PluginProperties.findAndDecodePluginPropertyValue(PAST_TRANSACTIONS_DAY,properties);
-        if(pastTransactionsDay != null) {
-            paymentInfo.setPastTransactionsDay(Integer.valueOf(pastTransactionsDay));
-        }
-
-        final String pastTransactionsYear = PluginProperties.findAndDecodePluginPropertyValue(PAST_TRANSACTIONS_YEAR,properties);
-        if(pastTransactionsYear != null) {
-            paymentInfo.setPastTransactionsYear(Integer.valueOf(pastTransactionsYear));
-        }
-
-        final String paymentAccountAge = PluginProperties.findAndDecodePluginPropertyValue(PAYMENT_ACCOUNT_AGE,properties);
-        paymentInfo.setPaymentAccountAge(paymentAccountAge);
-
-        final String paymentAccountIndicator = PluginProperties.findAndDecodePluginPropertyValue(PAYMENT_ACCOUNT_INDICATOR,properties);
-        paymentInfo.setPaymentAccountIndicator(paymentAccountIndicator);
-
-        final String deliveryAddressUsageDate = PluginProperties.findAndDecodePluginPropertyValue(DELIVERY_ADDRESS_USAGE_DATE,properties);
-        paymentInfo.setDeliveryAddressUsageDate(deliveryAddressUsageDate);
-
-        final String deliveryAddressUsageIndicator = PluginProperties.findAndDecodePluginPropertyValue(DELIVERY_ADDRESS_USAGE_INDICATOR,properties);
-        paymentInfo.setDeliveryAddressUsageIndicator(deliveryAddressUsageIndicator);
-
-        final String suspiciousActivity = PluginProperties.findAndDecodePluginPropertyValue(SUSPICIOUS_ACTIVITY,properties);
-        paymentInfo.setSuspiciousActivity(Boolean.valueOf(suspiciousActivity));
-
-        final String homePhone = PluginProperties.findAndDecodePluginPropertyValue(HOME_PHONE,properties);
-        paymentInfo.setHomePhone(homePhone);
-
-        final String mobilePhone = PluginProperties.findAndDecodePluginPropertyValue(MOBILE_PHONE, properties);
-        paymentInfo.setMobilePhone(mobilePhone);
-
-        final String workPhone = PluginProperties.findAndDecodePluginPropertyValue(WORK_PHONE,properties);
-        paymentInfo.setWorkPhone(workPhone);
-    }
-
 
     private static void setBrowserInfo(final PaymentInfo paymentInfo, final Iterable<PluginProperty> properties) {
         final String acceptHeader = PluginProperties.findPluginPropertyValue(PROPERTY_ACCEPT_HEADER, properties);

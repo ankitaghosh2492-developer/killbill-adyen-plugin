@@ -21,15 +21,20 @@ import java.util.Locale;
 
 import javax.annotation.Nullable;
 
+import org.joda.time.DateTime;
 import org.killbill.billing.account.api.Account;
 import org.killbill.billing.payment.api.PluginProperty;
 import org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi;
+import org.killbill.billing.plugin.adyen.client.model.PaymentInfo;
 import org.killbill.billing.plugin.adyen.client.model.UserData;
 import org.killbill.billing.plugin.api.PluginProperties;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
+
+import static org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi.*;
+import static org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi.WORK_PHONE;
 
 public abstract class UserDataMappingService {
 
@@ -69,8 +74,81 @@ public abstract class UserDataMappingService {
         // set ip
         userData.setShopperIP(PluginProperties.findPluginPropertyValue(AdyenPaymentPluginApi.PROPERTY_IP, properties));
 
-        return userData;
-    }
+        //determine AccountAge Indicator
+        final String accountAgeIndicator = PluginProperties.findPluginPropertyValue(ACCOUNT_AGE_INDICATOR,properties);
+        final Optional<String> optionalAccountAgeIndicator = toLastName(accountAgeIndicator,account);
+        final String accAgeIndicator = optionalAccountAgeIndicator.isPresent() ? optionalAccountAgeIndicator.get() : null;
+        userData.setAccountAgeIndicator(accAgeIndicator);
+
+        final String accountChangeDate = PluginProperties.findPluginPropertyValue(ACCOUNT_CHANGE_DATE,properties);
+        if(accountChangeDate != null) {
+            userData.setAccountChangeDate(DateTime.parse(accountChangeDate));
+        }
+        final String accountChangeIndicator = PluginProperties.findPluginPropertyValue(ACCOUNT_CHANGE_INDICATOR,properties);
+        userData.setAccountChangeIndicator(accountChangeIndicator);
+
+        final String accountCreationDate = PluginProperties.findPluginPropertyValue(ACCOUNT_CREATION_DATE,properties);
+        if(accountCreationDate != null) {
+                userData.setAccountCreationDate(DateTime.parse(accountCreationDate));
+        }
+
+        final String passwordChangeDate = PluginProperties.findPluginPropertyValue(PASSWORD_CHANGE_DATE,properties);
+        if(passwordChangeDate != null) {
+            userData.setPasswordChangeDate(DateTime.parse(passwordChangeDate));
+        }
+        final String passwordChangeDateIndicator = PluginProperties.findPluginPropertyValue(PASSWORD_CHANGE_DATE_INDICATOR,properties);
+        userData.setPasswordChangeDateIndicator(passwordChangeDateIndicator);
+
+        final String purchasesLast6Months = PluginProperties.findPluginPropertyValue(PURCHASES_LAST_6_MONTHS,properties);
+        if(purchasesLast6Months != null) {
+            userData.setPurchasesLast6Months(Integer.valueOf(purchasesLast6Months));
+        }
+
+        final String addCardAttemptsDay = PluginProperties.findAndDecodePluginPropertyValue(ADD_CARD_ATTEMPTS_DAY,properties);
+        if(addCardAttemptsDay != null) {
+            userData.setAddCardAttemptsDay(Integer.valueOf(addCardAttemptsDay));
+        }
+
+        final String pastTransactionsDay = PluginProperties.findAndDecodePluginPropertyValue(PAST_TRANSACTIONS_DAY,properties);
+        if(pastTransactionsDay != null) {
+            userData.setPastTransactionsDay(Integer.valueOf(pastTransactionsDay));
+        }
+
+        final String pastTransactionsYear = PluginProperties.findAndDecodePluginPropertyValue(PAST_TRANSACTIONS_YEAR,properties);
+        if(pastTransactionsYear != null) {
+            userData.setPastTransactionsYear(Integer.valueOf(pastTransactionsYear));
+        }
+
+        final String paymentAccountAge = PluginProperties.findAndDecodePluginPropertyValue(PAYMENT_ACCOUNT_AGE,properties);
+        if(paymentAccountAge != null) {
+            userData.setPaymentAccountAge(DateTime.parse(paymentAccountAge));
+        }
+        final String paymentAccountIndicator = PluginProperties.findAndDecodePluginPropertyValue(PAYMENT_ACCOUNT_INDICATOR,properties);
+        userData.setPaymentAccountIndicator(paymentAccountIndicator);
+
+        final String deliveryAddressUsageDate = PluginProperties.findAndDecodePluginPropertyValue(DELIVERY_ADDRESS_USAGE_DATE,properties);
+        if(deliveryAddressUsageDate != null) {
+            userData.setDeliveryAddressUsageDate(DateTime.parse(deliveryAddressUsageDate));
+        }
+        final String deliveryAddressUsageIndicator = PluginProperties.findAndDecodePluginPropertyValue(DELIVERY_ADDRESS_USAGE_INDICATOR,properties);
+        userData.setDeliveryAddressUsageIndicator(deliveryAddressUsageIndicator);
+
+        final String suspiciousActivity = PluginProperties.findAndDecodePluginPropertyValue(SUSPICIOUS_ACTIVITY,properties);
+        userData.setSuspiciousActivity(Boolean.valueOf(suspiciousActivity));
+
+        final String homePhone = PluginProperties.findAndDecodePluginPropertyValue(HOME_PHONE,properties);
+        userData.setHomePhone(homePhone);
+
+        final String mobilePhone = PluginProperties.findAndDecodePluginPropertyValue(MOBILE_PHONE, properties);
+        userData.setMobilePhone(mobilePhone);
+
+        final String workPhone = PluginProperties.findAndDecodePluginPropertyValue(WORK_PHONE,properties);
+        userData.setWorkPhone(workPhone);
+
+            return userData;
+        }
+
+
 
     /**
      * This function determines the customer id that will be used in the communication with Adyen.

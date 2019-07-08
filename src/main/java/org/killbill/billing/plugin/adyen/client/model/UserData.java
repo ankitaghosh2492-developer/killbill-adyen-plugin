@@ -35,6 +35,27 @@ public class UserData {
     private DateTime dateOfBirth;
     private String shopperIP;
 
+    // Shopper Account Info
+    private String accountAgeIndicator;
+    private DateTime accountChangeDate;
+    private String accountChangeIndicator;
+    private DateTime accountCreationDate;
+    private DateTime passwordChangeDate;
+    private String passwordChangeDateIndicator;
+    private Integer purchasesLast6Months;
+    private Integer addCardAttemptsDay;
+    private Integer pastTransactionsDay;
+    private Integer pastTransactionsYear;
+    private DateTime paymentAccountAge;
+    private String paymentAccountIndicator;
+    private DateTime deliveryAddressUsageDate;
+    private String deliveryAddressUsageIndicator;
+    private Boolean suspiciousActivity;
+    private String homePhone;
+    private String mobilePhone;
+    private String workPhone;
+    private String passwordChangeIndicator;
+
     public String getShopperEmail() {
         return shopperEmail;
     }
@@ -123,6 +144,158 @@ public class UserData {
         this.shopperIP = shopperIP;
     }
 
+    public String getAccountAgeIndicator() {
+        return accountAgeIndicator;
+    }
+
+    public void setAccountAgeIndicator(String accountAgeIndicator) {
+        this.accountAgeIndicator = accountAgeIndicator;
+    }
+
+    public DateTime getAccountChangeDate() {
+        return accountChangeDate;
+    }
+
+    public void setAccountChangeDate(DateTime accountChangeDate) {
+        this.accountChangeDate = accountChangeDate;
+    }
+
+    public String getAccountChangeIndicator() {
+        return accountChangeIndicator;
+    }
+
+    public void setAccountChangeIndicator(String accountChangeIndicator) {
+        this.accountChangeIndicator = accountChangeIndicator;
+    }
+
+    public DateTime getAccountCreationDate() {
+        return accountCreationDate;
+    }
+
+    public void setAccountCreationDate(DateTime accountCreationDate) {
+        this.accountCreationDate = accountCreationDate;
+    }
+
+    public DateTime getPasswordChangeDate() {
+        return passwordChangeDate;
+    }
+
+    public void setPasswordChangeDate(DateTime passwordChangeDate) {
+        this.passwordChangeDate = passwordChangeDate;
+    }
+
+    public String getPasswordChangeDateIndicator() {
+        return passwordChangeDateIndicator;
+    }
+
+    public void setPasswordChangeDateIndicator(String passwordChangeDateIndicator) {
+        this.passwordChangeDateIndicator = passwordChangeDateIndicator;
+    }
+
+    public Integer getPurchasesLast6Months() {
+        return purchasesLast6Months;
+    }
+
+    public void setPurchasesLast6Months(Integer purchasesLast6Months) {
+        this.purchasesLast6Months = purchasesLast6Months;
+    }
+
+    public Integer getAddCardAttemptsDay() {
+        return addCardAttemptsDay;
+    }
+
+    public void setAddCardAttemptsDay(Integer addCardAttemptsDay) {
+        this.addCardAttemptsDay = addCardAttemptsDay;
+    }
+
+    public Integer getPastTransactionsDay() {
+        return pastTransactionsDay;
+    }
+
+    public void setPastTransactionsDay(Integer pastTransactionsDay) {
+        this.pastTransactionsDay = pastTransactionsDay;
+    }
+
+    public Integer getPastTransactionsYear() {
+        return pastTransactionsYear;
+    }
+
+    public void setPastTransactionsYear(Integer pastTransactionsYear) {
+        this.pastTransactionsYear = pastTransactionsYear;
+    }
+
+    public DateTime getPaymentAccountAge() {
+        return paymentAccountAge;
+    }
+
+    public void setPaymentAccountAge(DateTime paymentAccountAge) {
+        this.paymentAccountAge = paymentAccountAge;
+    }
+
+    public String getPaymentAccountIndicator() {
+        return paymentAccountIndicator;
+    }
+
+    public void setPaymentAccountIndicator(String paymentAccountIndicator) {
+        this.paymentAccountIndicator = paymentAccountIndicator;
+    }
+
+    public DateTime getDeliveryAddressUsageDate() {
+        return deliveryAddressUsageDate;
+    }
+
+    public void setDeliveryAddressUsageDate(DateTime deliveryAddressUsageDate) {
+        this.deliveryAddressUsageDate = deliveryAddressUsageDate;
+    }
+
+    public String getDeliveryAddressUsageIndicator() {
+        return deliveryAddressUsageIndicator;
+    }
+
+    public void setDeliveryAddressUsageIndicator(String deliveryAddressUsageIndicator) {
+        this.deliveryAddressUsageIndicator = deliveryAddressUsageIndicator;
+    }
+
+    public Boolean getSuspiciousActivity() {
+        return suspiciousActivity;
+    }
+
+    public void setSuspiciousActivity(Boolean suspiciousActivity) {
+        this.suspiciousActivity = suspiciousActivity;
+    }
+
+    public String getHomePhone() {
+        return homePhone;
+    }
+
+    public void setHomePhone(String homePhone) {
+        this.homePhone = homePhone;
+    }
+
+    public String getMobilePhone() {
+        return mobilePhone;
+    }
+
+    public void setMobilePhone(String mobilePhone) {
+        this.mobilePhone = mobilePhone;
+    }
+
+    public String getWorkPhone() {
+        return workPhone;
+    }
+
+    public void setWorkPhone(String workPhone) {
+        this.workPhone = workPhone;
+    }
+
+    public String getPasswordChangeIndicator() {
+        return passwordChangeIndicator;
+    }
+
+    public void setPasswordChangeIndicator(String passwordChangeIndicator) {
+        this.passwordChangeIndicator = passwordChangeIndicator;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("UserData{");
@@ -137,6 +310,25 @@ public class UserData {
         sb.append(", socialSecurityNumber='").append(socialSecurityNumber).append('\'');
         sb.append(", dateOfBirth=").append(dateOfBirth);
         sb.append(", shopperIP='").append(shopperIP).append('\'');
+        sb.append(", accountAgeIndicator='").append(accountAgeIndicator).append('\'');
+        sb.append(", accountChangeDate='").append(accountChangeDate).append('\'');
+        sb.append(", accountChangeIndicator='").append(accountChangeIndicator).append('\'');
+        sb.append(", accountCreationDate='").append(accountCreationDate).append('\'');
+        sb.append(", passwordChangeDate='").append(passwordChangeDate).append('\'');
+        sb.append(", passwordChangeDateIndicator='").append(passwordChangeDateIndicator).append('\'');
+        sb.append(", purchasesLast6Months='").append(purchasesLast6Months).append('\'');
+        sb.append(", addCardAttemptsDay='").append(addCardAttemptsDay).append('\'');
+        sb.append(", pastTransactionsDay='").append(pastTransactionsDay).append('\'');
+        sb.append(", pastTransactionsYear='").append(pastTransactionsYear).append('\'');
+        sb.append(", paymentAccountAge='").append(paymentAccountAge).append('\'');
+        sb.append(", paymentAccountIndicator='").append(paymentAccountIndicator).append('\'');
+        sb.append(", deliveryAddressUsageDate='").append(deliveryAddressUsageDate).append('\'');
+        sb.append(", deliveryAddressUsageIndicator='").append(deliveryAddressUsageIndicator).append('\'');
+        sb.append(", suspiciousActivity='").append(suspiciousActivity).append('\'');
+        sb.append(", homePhone='").append(homePhone).append('\'');
+        sb.append(", mobilePhone='").append(mobilePhone).append('\'');
+        sb.append(", workPhone='").append(workPhone).append('\'');
+
         sb.append('}');
         return sb.toString();
     }

@@ -100,9 +100,10 @@ public class AdyenPaymentTransactionInfoPlugin extends PluginPaymentTransactionI
             .put(AdyenPaymentPluginApi.PROPERTY_THREEDS_SERVER_TRANS_ID, AdyenPaymentPluginApi.PROPERTY_THREEDS_SERVER_TRANS_ID)
             .put(AdyenPaymentPluginApi.PROPERTY_THREEDS2_TOKEN, AdyenPaymentPluginApi.PROPERTY_THREEDS2_TOKEN)
             .put(AdyenPaymentPluginApi.PROPERTY_THREEDS_METHOD_URL, AdyenPaymentPluginApi.PROPERTY_THREEDS_METHOD_URL)
-            .put(AdyenPaymentPluginApi.PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID, AdyenPaymentPluginApi.PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID)
+            //.put(AdyenPaymentPluginApi.PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID, AdyenPaymentPluginApi.PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID)
             .put(AdyenPaymentPluginApi.PROPERTY_ACS_TRANS_ID, AdyenPaymentPluginApi.PROPERTY_ACS_TRANS_ID)
             .put(AdyenPaymentPluginApi.PROPERTY_RESPONSE_MESSAGE_VERSION, AdyenPaymentPluginApi.PROPERTY_RESPONSE_MESSAGE_VERSION)
+            .put(AdyenPaymentPluginApi.PROPERTY_ACS_URL, AdyenPaymentPluginApi.PROPERTY_ACS_URL)
             .build();
 
 

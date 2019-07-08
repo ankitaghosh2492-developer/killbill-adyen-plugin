@@ -21,6 +21,9 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.util.*;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import org.joda.time.Period;
@@ -57,6 +60,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.jayway.restassured.http.ContentType;
+
+import javax.xml.bind.DatatypeConverter;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi.*;
@@ -665,16 +670,17 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
         formParams.put("password", "password");
 
         final String redirectHTML = given().log().all()
-                                           .contentType(ContentType.URLENC)
-                                           .accept(ContentType.HTML)
-                                           .formParams(formParams)
-                                           .post(formAction)
-                                           .then().log().all()
-                                           .statusCode(HTTP_200_OK)
-                                           .extract().asString();
+                .contentType(ContentType.URLENC)
+                .accept(ContentType.HTML)
+                .formParams(formParams)
+                .post(formAction)
+                .then().log().all()
+                .statusCode(HTTP_200_OK)
+                .extract().asString();
 
         final Map<String, String> redirectFormParams = extractForm(redirectHTML);
         assertFalse(redirectFormParams.isEmpty(), "No FORM found in redirect HTML response");
+
         assertEquals(termUrl, redirectFormParams.remove("formAction"));
         // simulate url encoding that happens in the KillBill Client
         redirectFormParams.put("MD", UTF8UrlEncoder.encodeQueryElement(redirectFormParams.get("MD")));
@@ -725,8 +731,8 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
         assertEquals(paymentTransactionInfoPluginsPostCapture.get(1).getTransactionType(), TransactionType.CAPTURE);
         assertEquals(paymentTransactionInfoPluginsPostCapture.get(1).getStatus(), PaymentPluginStatus.PENDING);
     }
-
-    @Test(groups = "integration")
+  
+@Test(groups = "integration")
     public void testAuthorize3DS2IdentifyShopper() throws Exception {
         adyenPaymentPluginApi.addPaymentMethod(account.getId(), account.getPaymentMethodId(), adyenEmptyPaymentMethodPlugin(), true, propertiesFor3DS2IdentifyShopper, context);
 
@@ -815,7 +821,7 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
         assertEquals(adyenInfoObj2.getAdyenResponseRecord().get().getResultCode(), "ChallengeShopper");
 
         final String messageVersion = PluginProperties.findPluginPropertyValue(PROPERTY_RESPONSE_MESSAGE_VERSION, authorizationInfoPlugin2.getProperties());
-        final String transId = PluginProperties.findPluginPropertyValue(PROPERTY_THREEDS_SERVER_TRANS_ID, authorizationInfoPlugin2.getProperties());
+        final String transId = PluginProperties.findPluginPropertyValue(PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID, authorizationInfoPlugin2.getProperties());
         final String acsTransId = PluginProperties.findPluginPropertyValue(PROPERTY_ACS_TRANS_ID, authorizationInfoPlugin2.getProperties());
 
 
@@ -860,8 +866,7 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
 //        assertEquals(paymentTransactionInfoPluginsPostCapture.get(1).getStatus(), PaymentPluginStatus.PENDING);
     }
 
-
-    @Test(groups = "integration")
+   @Test(groups = "integration")
     public void testAuthorize3DS2ChallengeShopper() throws Exception {
         adyenPaymentPluginApi.addPaymentMethod(account.getId(), account.getPaymentMethodId(), adyenEmptyPaymentMethodPlugin(), true, propertiesFor3DS2ChallengeShopper, context);
 
@@ -882,7 +887,7 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
         final String threeDS2Token = PluginProperties.findPluginPropertyValue(PROPERTY_THREEDS2_TOKEN, authorizationInfoPlugin1.getProperties());
         final String acsTransID = PluginProperties.findPluginPropertyValue(PROPERTY_ACS_TRANS_ID, authorizationInfoPlugin1.getProperties());
         final String acsURL = PluginProperties.findPluginPropertyValue(PROPERTY_ACS_URL, authorizationInfoPlugin1.getProperties());
-        final String messageVersion = PluginProperties.findPluginPropertyValue(PROPERTY_RESPONSE_MESSAGE_VERSION, authorizationInfoPlugin1.getProperties());
+        final String messageVersion = PluginProperties.findPluginPropertyValue(PROPERTY_MESSAGE_VERSION, authorizationInfoPlugin1.getProperties());
 
         assertNull(authorizationInfoPlugin1.getGatewayErrorCode());
         assertNotNull(threeDSServerTransID);
@@ -977,7 +982,8 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
         assertEquals(paymentTransactionInfoPluginsPostCapture.get(1).getTransactionType(), TransactionType.CAPTURE);
         assertEquals(paymentTransactionInfoPluginsPostCapture.get(1).getStatus(), PaymentPluginStatus.PENDING);
     }
-
+  
+   
     @Test(groups = "integration")
     public void testAuthorizeAndExpire3DSecure() throws Exception {
         adyenPaymentPluginApi.addPaymentMethod(account.getId(), account.getPaymentMethodId(), adyenEmptyPaymentMethodPlugin(), true, propertiesWith3DSInfo, context);
@@ -1058,6 +1064,11 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
         assertEquals(fromDBList.get(0).getGatewayError(), "Expired Card");
     }
 
+    private String toJsonAndEncode(Map<String, String> data) throws JsonProcessingException {
+        String json = new ObjectMapper().writeValueAsString(data);
+        return Base64.getEncoder().encodeToString(json.getBytes(Charsets.UTF_8));
+    }
+
     private Map<String, String> extractForm(final String html) {
         final Map<String, String> fields = new HashMap<String, String>();
         final Document doc = Jsoup.parse(html);
@@ -1079,7 +1090,9 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
     }
 
     private String rewriteFormURL(final URL issuerUrl, final String formAction) {
-        if (formAction.startsWith("http")) {
+        if (formAction == null || formAction.isEmpty()) {
+            return issuerUrl.toString();
+        } else if (formAction.startsWith("http")) {
             return formAction;
         } else {
             return issuerUrl.getProtocol() + "://" + issuerUrl.getHost() + (issuerUrl.getPort() != HTTP_PORT && issuerUrl.getPort() != HTTPS_PORT ? ":" + issuerUrl.getPort() : "") + formAction;

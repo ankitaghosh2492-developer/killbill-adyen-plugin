@@ -172,7 +172,6 @@ public class AdyenPaymentPluginApi extends PluginPaymentPluginApi<AdyenResponses
     public static final String PROPERTY_RESPONSE_MESSAGE_VERSION = "threeds2.threeDS2ResponseData.messageVersion";
     public static final String PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID = "threeds2.threeDS2ResponseData.threeDSServerTransID";
 
-
     // Credit cards
     public static final String PROPERTY_CC_ISSUER_COUNTRY = "issuerCountry";
     public static final String PROPERTY_CC_ENCRYPTED_JSON = "encryptedJson";
@@ -1242,6 +1241,7 @@ public class AdyenPaymentPluginApi extends PluginPaymentPluginApi<AdyenResponses
             builder.add(new PluginProperty(PROPERTY_ACS_REFERENCE_NUMBER, acsReferenceNumber.toString(), false));
         }
         return builder.build();
+
     }
 
     private AdyenConfigProperties getConfigProperties(final TenantContext context) {

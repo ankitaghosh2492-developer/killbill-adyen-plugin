@@ -21,7 +21,8 @@ import org.killbill.adyen.common.*;
 import org.killbill.adyen.payment.AnyType2AnyTypeMap;
 import org.killbill.adyen.payment.PaymentRequest3Ds2;
 import org.killbill.adyen.payment.Recurring;
-import org.killbill.adyen.threeds2data.*;
+import org.killbill.adyen.threeds2data.ChallengeIndicator;
+import org.killbill.adyen.threeds2data.ThreeDS2RequestData;
 import org.killbill.billing.plugin.adyen.client.model.PaymentData;
 import org.killbill.billing.plugin.adyen.client.model.PaymentInfo;
 import org.killbill.billing.plugin.adyen.client.model.SplitSettlementData;
@@ -80,8 +81,7 @@ public class PaymentRequest3Ds2Builder extends RequestBuilder<PaymentRequest3Ds2
         setAccountInfo();
         return request;
     }
-
-    private void setAccountInfo(){
+private void setAccountInfo(){
         final AccountInfo accountInfo = new AccountInfo();
         accountInfo.setAccountAgeIndicator(ThreeDS2TimeFrameWithNotApplicable.fromValue(userData.getAccountAgeIndicator()));
 
@@ -235,6 +235,8 @@ public class PaymentRequest3Ds2Builder extends RequestBuilder<PaymentRequest3Ds2
         request.setShopperIP(userData.getShopperIP());
         request.setShopperReference(userData.getShopperReference());
     }
+
+
 
     private void set3DS2Fields() {
         final PaymentInfo paymentInfo = paymentData.getPaymentInfo();

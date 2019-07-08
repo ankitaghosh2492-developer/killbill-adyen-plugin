@@ -236,6 +236,7 @@ public abstract class PaymentInfoMappingService {
         if (acsReferenceNumber != null) {
             paymentInfo.setAcsReferenceNumber(acsReferenceNumber);
         }
+
     }
 
     private static void setBillingAddress(@Nullable final String countryCode, @Nullable final AccountData account, final PaymentInfo paymentInfo, @Nullable final AdyenPaymentMethodsRecord paymentMethodsRecord, final Iterable<PluginProperty> properties) {

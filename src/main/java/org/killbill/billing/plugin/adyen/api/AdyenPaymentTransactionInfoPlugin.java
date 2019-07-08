@@ -100,12 +100,10 @@ public class AdyenPaymentTransactionInfoPlugin extends PluginPaymentTransactionI
             .put(AdyenPaymentPluginApi.PROPERTY_THREEDS_SERVER_TRANS_ID, AdyenPaymentPluginApi.PROPERTY_THREEDS_SERVER_TRANS_ID)
             .put(AdyenPaymentPluginApi.PROPERTY_THREEDS2_TOKEN, AdyenPaymentPluginApi.PROPERTY_THREEDS2_TOKEN)
             .put(AdyenPaymentPluginApi.PROPERTY_THREEDS_METHOD_URL, AdyenPaymentPluginApi.PROPERTY_THREEDS_METHOD_URL)
-            //.put(AdyenPaymentPluginApi.PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID, AdyenPaymentPluginApi.PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID)
+            .put(AdyenPaymentPluginApi.PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID, AdyenPaymentPluginApi.PROPERTY_RESPONSE_THREEDS_SERVER_TRANS_ID)
             .put(AdyenPaymentPluginApi.PROPERTY_ACS_TRANS_ID, AdyenPaymentPluginApi.PROPERTY_ACS_TRANS_ID)
             .put(AdyenPaymentPluginApi.PROPERTY_RESPONSE_MESSAGE_VERSION, AdyenPaymentPluginApi.PROPERTY_RESPONSE_MESSAGE_VERSION)
-            .put(AdyenPaymentPluginApi.PROPERTY_ACS_URL, AdyenPaymentPluginApi.PROPERTY_ACS_URL)
             .build();
-
 
     public AdyenPaymentTransactionInfoPlugin(final UUID kbPaymentId,
                                              final UUID kbTransactionPaymentPaymentId,
@@ -371,6 +369,7 @@ public class AdyenPaymentTransactionInfoPlugin extends PluginPaymentTransactionI
         }
 
         Map<String, String> additionalData = purchaseResult.getAdditionalData();
+        ImmutableList.Builder<PluginProperty> builder = ImmutableList.builder();
 
         if (additionalData != null) {
             for (Map.Entry<String, String> entry: additionalData.entrySet()) {
@@ -384,9 +383,14 @@ public class AdyenPaymentTransactionInfoPlugin extends PluginPaymentTransactionI
                     }
                 }
             }
+
+            List<PluginProperty> threeds2Props = AdyenPaymentPluginApi.extractThreeDS2Data(additionalData);
+
+            builder.addAll(threeds2Props);
         }
 
-        return PluginProperties.buildPluginProperties(propertiesMap);
+        builder.addAll(PluginProperties.buildPluginProperties(propertiesMap));
+        return builder.build();
     }
 
     private static String toString(final Object obj) {

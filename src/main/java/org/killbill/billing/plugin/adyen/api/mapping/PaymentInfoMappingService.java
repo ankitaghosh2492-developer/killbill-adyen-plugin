@@ -22,7 +22,6 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.joda.time.DateTime;
 import org.killbill.billing.account.api.AccountData;
 import org.killbill.billing.payment.api.PluginProperty;
 import org.killbill.billing.plugin.adyen.client.AdyenConfigProperties;
@@ -54,6 +53,7 @@ public abstract class PaymentInfoMappingService {
                                             @Nullable final AdyenPaymentMethodsRecord paymentMethodsRecord,
                                             final Iterable<PluginProperty> properties) {
         final PaymentInfo paymentInfo;
+
 
         if (paymentMethodsRecord == null) {
             paymentInfo = WebPaymentFrontendMappingService.toPaymentInfo(merchantAccount, configuration, clock, properties);
@@ -199,6 +199,7 @@ public abstract class PaymentInfoMappingService {
         final String authenticationType = PluginProperties.findPluginPropertyValue(PROPERTY_AUTHENTICATION_TYPE, properties);
         final String dsTransID = PluginProperties.findPluginPropertyValue(PROPERTY_DS_TRANS_ID, properties);
         final String acsReferenceNumber = PluginProperties.findPluginPropertyValue(PROPERTY_ACS_REFERENCE_NUMBER, properties);
+        final String acsUrl = PluginProperties.findPluginPropertyValue(PROPERTY_ACS_URL, properties);
 
         if (notificationUrl != null) {
             paymentInfo.setNotificationUrl(notificationUrl);
@@ -236,7 +237,9 @@ public abstract class PaymentInfoMappingService {
         if (acsReferenceNumber != null) {
             paymentInfo.setAcsReferenceNumber(acsReferenceNumber);
         }
-
+        if (acsUrl != null) {
+            paymentInfo.setAcsUrl(acsUrl);
+        }
     }
 
     private static void setBillingAddress(@Nullable final String countryCode, @Nullable final AccountData account, final PaymentInfo paymentInfo, @Nullable final AdyenPaymentMethodsRecord paymentMethodsRecord, final Iterable<PluginProperty> properties) {

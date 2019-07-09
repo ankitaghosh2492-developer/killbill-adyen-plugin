@@ -25,7 +25,6 @@ import org.joda.time.DateTime;
 import org.killbill.billing.account.api.Account;
 import org.killbill.billing.payment.api.PluginProperty;
 import org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi;
-import org.killbill.billing.plugin.adyen.client.model.PaymentInfo;
 import org.killbill.billing.plugin.adyen.client.model.UserData;
 import org.killbill.billing.plugin.api.PluginProperties;
 
@@ -147,8 +146,6 @@ public abstract class UserDataMappingService {
 
             return userData;
         }
-
-
 
     /**
      * This function determines the customer id that will be used in the communication with Adyen.

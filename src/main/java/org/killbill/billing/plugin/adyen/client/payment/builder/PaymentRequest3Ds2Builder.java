@@ -23,6 +23,7 @@ import org.killbill.adyen.payment.PaymentRequest3Ds2;
 import org.killbill.adyen.payment.Recurring;
 import org.killbill.adyen.threeds2data.ChallengeIndicator;
 import org.killbill.adyen.threeds2data.ThreeDS2RequestData;
+import org.killbill.adyen.threeds2data.ThreeDS2Result;
 import org.killbill.billing.plugin.adyen.client.model.PaymentData;
 import org.killbill.billing.plugin.adyen.client.model.PaymentInfo;
 import org.killbill.billing.plugin.adyen.client.model.SplitSettlementData;
@@ -34,6 +35,9 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.util.List;
 import java.util.Map;
+import org.killbill.adyen.threeds2data.AccountInfo;
+import org.killbill.adyen.threeds2data.ThreeDS2TimeFrameWithNotApplicable;
+import org.killbill.adyen.threeds2data.ThreeDS2TimeFrame;
 
 public class PaymentRequest3Ds2Builder extends RequestBuilder<PaymentRequest3Ds2> {
 
@@ -72,10 +76,10 @@ public class PaymentRequest3Ds2Builder extends RequestBuilder<PaymentRequest3Ds2
         // * merchantOrderReference
         setAmount();
         setBillingAddress();
-        setBrowserInfo();
         setRecurring();
         setShopperData();
         set3DS2Fields();
+        setBrowserInfo();
         setSplitSettlementData();
         addAdditionalData(request.getAdditionalData(), additionalData);
         setAccountInfo();
@@ -236,19 +240,26 @@ private void setAccountInfo(){
         request.setShopperReference(userData.getShopperReference());
     }
 
-
-
     private void set3DS2Fields() {
         final PaymentInfo paymentInfo = paymentData.getPaymentInfo();
         final ThreeDS2RequestData threeDS2RequestData = new ThreeDS2RequestData();
-        threeDS2RequestData.setAuthenticationOnly(false);
-        threeDS2RequestData.setChallengeIndicator(ChallengeIndicator.NO_PREFERENCE);  // TODO from property
-        threeDS2RequestData.setDeviceChannel("browser");
-        threeDS2RequestData.setNotificationURL(paymentInfo.getNotificationUrl());
-        threeDS2RequestData.setThreeDSCompInd(paymentInfo.getThreeDSCompInd());
-        threeDS2RequestData.setThreeDSServerTransID(paymentInfo.getThreeDSServerTransID());
-        threeDS2RequestData.setMessageVersion(paymentInfo.getMessageVersion());
-        request.setThreeDS2RequestData(threeDS2RequestData);
+
+        if (paymentInfo.getTransStatus() != null) {
+            final ThreeDS2Result threeDS2Result = new ThreeDS2Result();
+            threeDS2Result.setTransStatus(paymentInfo.getTransStatus());
+            threeDS2Result.setThreeDSServerTransID(paymentInfo.getThreeDSServerTransID());
+            request.setThreeDS2Result(threeDS2Result);
+        }
+        else {
+            threeDS2RequestData.setAuthenticationOnly(false);
+            threeDS2RequestData.setChallengeIndicator(ChallengeIndicator.NO_PREFERENCE);  // TODO from property
+            threeDS2RequestData.setDeviceChannel("browser");
+            threeDS2RequestData.setNotificationURL(paymentInfo.getNotificationUrl());
+            threeDS2RequestData.setThreeDSCompInd(paymentInfo.getThreeDSCompInd());
+            threeDS2RequestData.setThreeDSServerTransID(paymentInfo.getThreeDSServerTransID());
+            threeDS2RequestData.setMessageVersion(paymentInfo.getMessageVersion());
+            request.setThreeDS2RequestData(threeDS2RequestData);
+        }
         request.setThreeDS2Token(paymentInfo.getThreeDS2Token());
     }
 

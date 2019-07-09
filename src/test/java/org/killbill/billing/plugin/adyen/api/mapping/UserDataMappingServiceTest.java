@@ -19,10 +19,8 @@ package org.killbill.billing.plugin.adyen.api.mapping;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.UUID;
 
-import com.google.common.collect.ImmutableMap;
 import org.killbill.billing.account.api.Account;
 import org.killbill.billing.payment.api.PluginProperty;
 import org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi;
@@ -434,6 +432,5 @@ public class UserDataMappingServiceTest {
         assertEquals(userData.getFirstName(), null);
         assertEquals(userData.getLastName(), null);
         assertEquals(userData.getShopperIP(), null);
-        assertEquals(userData.getAccountAgeIndicator(), null);
     }
 }

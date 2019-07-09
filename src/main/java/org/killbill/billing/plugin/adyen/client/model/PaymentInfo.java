@@ -17,8 +17,6 @@
 
 package org.killbill.billing.plugin.adyen.client.model;
 
-import org.joda.time.DateTime;
-
 import java.util.Map;
 
 public class PaymentInfo {
@@ -58,6 +56,7 @@ public class PaymentInfo {
     private String threeDS2Token;
     private String threeDSMethodURL;
     private String acsTransID;
+    private String acsUrl;
     private String messageVersion;
     private String transStatus;
     private String acsChallengeMandated;
@@ -287,7 +286,7 @@ public class PaymentInfo {
 
     public boolean hasThreeDS2Data() {
         return notificationUrl != null || threeDSCompInd != null || threeDSServerTransID != null ||
-                threeDS2Token != null || threeDSMethodURL != null || acsTransID != null || messageVersion != null;
+                threeDS2Token != null || threeDSMethodURL != null || acsTransID != null || acsUrl != null || messageVersion != null;
     }
 
     public String getNotificationUrl() {
@@ -304,6 +303,10 @@ public class PaymentInfo {
 
     public void setThreeDSCompInd(String threeDSCompInd) {
         this.threeDSCompInd = threeDSCompInd;
+    }
+
+    public String getTransStatus() {
+        return transStatus;
     }
 
     public void setTransStatus(String transStatus) {
@@ -326,12 +329,16 @@ public class PaymentInfo {
         this.acsReferenceNumber = acsReferenceNumber;
     }
 
-    public String getThreeDSServerTransID() {
-        return threeDSServerTransID;
-    }
-  
     public void setThreeDSServerTransID(String threeDSServerTransID) {
         this.threeDSServerTransID = threeDSServerTransID;
+    }
+
+    public void setAcsUrl(String acsUrl) {
+        this.acsUrl = acsUrl;
+    }
+
+    public String getThreeDSServerTransID() {
+        return threeDSServerTransID;
     }
 
     public String getThreeDS2Token() {
@@ -353,6 +360,8 @@ public class PaymentInfo {
     public String getAcsTransID() {
         return acsTransID;
     }
+
+    public String getAcsUrl(){ return acsUrl; }
 
     public void setAcsTransID(String acsTransID) {
         this.acsTransID = acsTransID;

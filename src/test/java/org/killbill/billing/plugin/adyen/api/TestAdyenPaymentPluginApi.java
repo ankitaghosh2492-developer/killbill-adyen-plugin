@@ -106,7 +106,6 @@ public class TestAdyenPaymentPluginApi extends TestAdyenPaymentPluginApiBase {
             .put(AdyenPaymentPluginApi.WORK_PHONE,"8111234567")
             .put(AdyenPaymentPluginApi.MOBILE_PHONE, "8111234567")
             .build();
-
     private static final Map<String, String> three3DSbrowserInfo = ImmutableMap.<String, String>builder()
             .put(AdyenPaymentPluginApi.PROPERTY_USER_AGENT, "Java/1.8")
             .put(AdyenPaymentPluginApi.PROPERTY_ACCEPT_HEADER, "application/json")

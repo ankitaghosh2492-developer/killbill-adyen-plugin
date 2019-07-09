@@ -85,6 +85,7 @@ public class PaymentRequest3Ds2Builder extends RequestBuilder<PaymentRequest3Ds2
         setAccountInfo();
         return request;
     }
+
 private void setAccountInfo(){
         final AccountInfo accountInfo = new AccountInfo();
         accountInfo.setAccountAgeIndicator(ThreeDS2TimeFrameWithNotApplicable.fromValue(userData.getAccountAgeIndicator()));
@@ -157,6 +158,7 @@ private void setAccountInfo(){
         accountInfo.setWorkPhone(userData.getWorkPhone());
         accountInfo.setPasswordChangeIndicator(ThreeDS2TimeFrameWithNotApplicable.fromValue(userData.getPasswordChangeIndicator()));
         request.setAccountInfo(accountInfo);
+
     }
 
     private void setAmount() {

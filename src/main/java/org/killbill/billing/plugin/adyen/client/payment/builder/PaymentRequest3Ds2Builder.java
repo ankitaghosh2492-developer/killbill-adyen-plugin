@@ -158,7 +158,6 @@ private void setAccountInfo(){
         accountInfo.setWorkPhone(userData.getWorkPhone());
         accountInfo.setPasswordChangeIndicator(ThreeDS2TimeFrameWithNotApplicable.fromValue(userData.getPasswordChangeIndicator()));
         request.setAccountInfo(accountInfo);
-
     }
 
     private void setAmount() {

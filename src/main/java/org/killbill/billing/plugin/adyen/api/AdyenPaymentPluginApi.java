@@ -32,6 +32,7 @@ import javax.annotation.Nullable;
 import javax.xml.bind.JAXBException;
 
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.killbill.adyen.recurring.RecurringDetail;
 import org.killbill.adyen.recurring.ServiceException;
 import org.killbill.billing.account.api.Account;
@@ -77,6 +78,7 @@ import org.killbill.billing.plugin.adyen.core.AdyenConfigPropertiesConfiguration
 import org.killbill.billing.plugin.adyen.core.AdyenConfigurationHandler;
 import org.killbill.billing.plugin.adyen.core.AdyenHostedPaymentPageConfigurationHandler;
 import org.killbill.billing.plugin.adyen.core.AdyenRecurringConfigurationHandler;
+import org.killbill.billing.plugin.adyen.core.DelayedActionScheduler;
 import org.killbill.billing.plugin.adyen.core.KillbillAdyenNotificationHandler;
 import org.killbill.billing.plugin.adyen.dao.AdyenDao;
 import org.killbill.billing.plugin.adyen.dao.gen.tables.AdyenPaymentMethods;
@@ -91,6 +93,7 @@ import org.killbill.billing.plugin.util.KillBillMoney;
 import org.killbill.billing.util.callcontext.CallContext;
 import org.killbill.billing.util.callcontext.TenantContext;
 import org.killbill.clock.Clock;
+import org.killbill.notificationq.api.NotificationEvent;
 import org.osgi.service.log.LogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -277,6 +280,7 @@ public class AdyenPaymentPluginApi extends PluginPaymentPluginApi<AdyenResponses
     private final AdyenConfigPropertiesConfigurationHandler adyenConfigPropertiesConfigurationHandler;
     private final AdyenDao dao;
     private final AdyenNotificationService adyenNotificationService;
+    private final DelayedActionScheduler delayedActionScheduler;
 
     public AdyenPaymentPluginApi(final AdyenConfigurationHandler adyenConfigurationHandler,
                                  final AdyenConfigPropertiesConfigurationHandler adyenConfigPropertiesConfigurationHandler,
@@ -286,13 +290,16 @@ public class AdyenPaymentPluginApi extends PluginPaymentPluginApi<AdyenResponses
                                  final OSGIConfigPropertiesService osgiConfigPropertiesService,
                                  final OSGIKillbillLogService logService,
                                  final Clock clock,
-                                 final AdyenDao dao) throws JAXBException {
+                                 final AdyenDao dao,
+                                 final DelayedActionScheduler delayedActionScheduler) throws JAXBException {
         super(killbillApi, osgiConfigPropertiesService, logService, clock, dao);
         this.adyenConfigurationHandler = adyenConfigurationHandler;
         this.adyenHppConfigurationHandler = adyenHppConfigurationHandler;
         this.adyenRecurringConfigurationHandler = adyenRecurringConfigurationHandler;
         this.adyenConfigPropertiesConfigurationHandler = adyenConfigPropertiesConfigurationHandler;
         this.dao = dao;
+        this.delayedActionScheduler = delayedActionScheduler;
+        this.delayedActionScheduler.setApi(this);
 
         final AdyenNotificationHandler adyenNotificationHandler = new KillbillAdyenNotificationHandler(adyenConfigPropertiesConfigurationHandler, killbillApi, dao, clock);
         //noinspection RedundantTypeArguments
@@ -933,7 +940,7 @@ public class AdyenPaymentPluginApi extends PluginPaymentPluginApi<AdyenResponses
         }
     }
 
-    private AdyenResponsesRecord fetchResponseIfExist(final UUID kbPaymentId, final UUID tenantId) throws PaymentPluginApiException {
+    public AdyenResponsesRecord fetchResponseIfExist(final UUID kbPaymentId, final UUID tenantId) throws PaymentPluginApiException {
         try {
             return dao.getSuccessfulAuthorizationResponse(kbPaymentId, tenantId);
         } catch (final SQLException e) {

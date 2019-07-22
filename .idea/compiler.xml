@@ -17,13 +17,18 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="adyen-plugin" />
+        <module name="adyen-plugin (1)" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="adyen-plugin" target="1.8" />
+      <module name="adyen-plugin (2)" target="1.5" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_STRING" value="-Xlint:unchecked " />
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="adyen-plugin" options="" />
+      <module name="adyen-plugin (1)" options="" />
+    </option>
   </component>
 </project>

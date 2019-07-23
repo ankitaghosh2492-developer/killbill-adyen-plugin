@@ -24,17 +24,20 @@ public abstract class CheckForThreeDs2StepCompleted extends DelayedActionEvent {
     private final UUID kbPaymentId;
     private final String kbPaymentTransactionId;
     private final String kbPaymentTransactionExternalKey;
+    private final UUID kbPaymentMethodId;
 
     public CheckForThreeDs2StepCompleted(final UUID uuidKey,
                                          final UUID kbTenantId,
                                          final UUID kbPaymentId,
                                          final String kbPaymentTransactionId,
-                                         final String kbPaymentTransactionExternalKey) {
+                                         final String kbPaymentTransactionExternalKey,
+                                         final UUID kbPaymentMethodId) {
         super(uuidKey);
         this.kbTenantId = kbTenantId;
         this.kbPaymentId = kbPaymentId;
         this.kbPaymentTransactionId = kbPaymentTransactionId;
         this.kbPaymentTransactionExternalKey = kbPaymentTransactionExternalKey;
+        this.kbPaymentMethodId = kbPaymentMethodId;
     }
 
     public UUID getKbTenantId() {
@@ -51,5 +54,9 @@ public abstract class CheckForThreeDs2StepCompleted extends DelayedActionEvent {
 
     public String getKbPaymentTransactionExternalKey() {
         return kbPaymentTransactionExternalKey;
+    }
+
+    public UUID getKbPaymentMethodId(){
+        return kbPaymentMethodId;
     }
 }

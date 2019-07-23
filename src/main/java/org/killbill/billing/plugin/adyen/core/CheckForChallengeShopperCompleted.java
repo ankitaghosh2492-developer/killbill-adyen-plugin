@@ -17,13 +17,26 @@
 
 package org.killbill.billing.plugin.adyen.core;
 
+import java.util.List;
 import java.util.UUID;
 
+import com.google.common.collect.ImmutableMap;
+import org.killbill.billing.catalog.api.Currency;
+import org.killbill.billing.payment.api.PluginProperty;
+import org.killbill.billing.payment.plugin.api.PaymentPluginApiException;
+import org.killbill.billing.plugin.adyen.api.AdyenCallContext;
 import org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi;
 import org.killbill.billing.plugin.adyen.dao.AdyenDao;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.killbill.billing.plugin.adyen.dao.gen.tables.records.AdyenResponsesRecord;
+import org.killbill.billing.plugin.api.PluginProperties;
+import org.killbill.billing.util.callcontext.CallContext;
+import org.killbill.clock.Clock;
+import org.killbill.clock.DefaultClock;
+
+import static org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi.PROPERTY_TRANS_STATUS;
 
 public class CheckForChallengeShopperCompleted extends CheckForThreeDs2StepCompleted {
 
@@ -32,8 +45,9 @@ public class CheckForChallengeShopperCompleted extends CheckForThreeDs2StepCompl
                                              @JsonProperty final UUID kbTenantId,
                                              @JsonProperty final UUID kbPaymentId,
                                              @JsonProperty final String kbPaymentTransactionId,
-                                             @JsonProperty final String kbPaymentTransactionExternalKey) {
-        super(uuidKey, kbTenantId, kbPaymentId, kbPaymentTransactionId, kbPaymentTransactionExternalKey);
+                                             @JsonProperty final String kbPaymentTransactionExternalKey,
+                                             @JsonProperty final UUID kbPaymentMethodId) {
+        super(uuidKey, kbTenantId, kbPaymentId, kbPaymentTransactionId, kbPaymentTransactionExternalKey, kbPaymentMethodId);
     }
 
     @Override
@@ -43,5 +57,38 @@ public class CheckForChallengeShopperCompleted extends CheckForThreeDs2StepCompl
         // if not, then
         //   send transStatus = U to adyen and finish the payment as failed
         // if yes, then do nothing since the payment complete call should have continued the authorization
+
+        final AdyenResponsesRecord previousResponse = adyenDao.getSuccessfulAuthorizationResponse(getKbPaymentId(), getKbTenantId());
+        final Clock clock = new DefaultClock();
+        final CallContext context = new AdyenCallContext(clock.getUTCNow(), getKbTenantId());
+
+        if (previousResponse == null) {
+            throw new PaymentPluginApiException(null, "Unable to retrieve previous payment response for kbPaymentTransactionId " + getKbPaymentTransactionId());
+        }
+
+        if (previousResponse.getKbPaymentTransactionId() != getKbPaymentTransactionId()) {
+            // the payment has already advanced, so nothing to do
+            return;
+        }
+        if (previousResponse.getResultCode() != "ChallengeShopper") {
+            // we are not actually in Challenge, so nothing to do
+            return;
+        }
+            if(previousResponse != null) {
+
+                final List<PluginProperty> propertiesWithTransStatus = PluginProperties.buildPluginProperties(ImmutableMap.of(PROPERTY_TRANS_STATUS, "U"));
+                UUID kbAccountId = UUID.fromString(previousResponse.getKbAccountId());
+
+                adyenPaymentPluginApi.authorizePayment(kbAccountId,
+                        getKbPaymentId(),
+                        UUID.fromString(getKbPaymentTransactionId()),
+                        getKbPaymentMethodId(),
+                        previousResponse.getAmount(),
+                        Currency.fromCode(previousResponse.getCurrency()),
+                        propertiesWithTransStatus,
+                        context);
+
+            }
+
     }
 }

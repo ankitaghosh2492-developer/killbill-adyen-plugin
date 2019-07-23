@@ -17,45 +17,70 @@
 
 package org.killbill.billing.plugin.adyen.core;
 
+import java.util.List;
 import java.util.UUID;
-
+import com.google.common.collect.ImmutableMap;
+import org.killbill.billing.catalog.api.Currency;
+import org.killbill.billing.payment.api.PluginProperty;
 import org.killbill.billing.payment.plugin.api.PaymentPluginApiException;
+import org.killbill.billing.plugin.adyen.api.AdyenCallContext;
 import org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi;
-import org.killbill.billing.plugin.adyen.client.model.PurchaseResult;
 import org.killbill.billing.plugin.adyen.dao.AdyenDao;
 import org.killbill.billing.plugin.adyen.dao.gen.tables.records.AdyenResponsesRecord;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.killbill.billing.plugin.api.PluginProperties;
+import org.killbill.billing.util.callcontext.CallContext;
+import org.killbill.clock.Clock;
+import org.killbill.clock.DefaultClock;
+
+import static org.killbill.billing.plugin.adyen.api.AdyenPaymentPluginApi.PROPERTY_THREEDS_COMP_IND;
 
 public class CheckForIdentifyShopperCompleted extends CheckForThreeDs2StepCompleted {
+
 
     @JsonCreator
     public CheckForIdentifyShopperCompleted(@JsonProperty final UUID uuidKey,
                                             @JsonProperty final UUID kbTenantId,
                                             @JsonProperty final UUID kbPaymentId,
                                             @JsonProperty final String kbPaymentTransactionId,
-                                            @JsonProperty final String kbPaymentTransactionExternalKey) {
-        super(uuidKey, kbTenantId, kbPaymentId, kbPaymentTransactionId, kbPaymentTransactionExternalKey);
+                                            @JsonProperty final String kbPaymentTransactionExternalKey,
+                                            @JsonProperty final UUID kbPaymentMethodId) {
+        super(uuidKey, kbTenantId, kbPaymentId, kbPaymentTransactionId, kbPaymentTransactionExternalKey, kbPaymentMethodId);
     }
 
     @Override
     public void performAction(final AdyenPaymentPluginApi adyenPaymentPluginApi, final AdyenDao adyenDao) throws Exception {
-        final AdyenResponsesRecord previousResponse = adyenDao.getSuccessfulAuthorizationResponse(getKbPaymentId(), getKbTenantId());
-        if (previousResponse == null) {
+        final Clock clock = new DefaultClock();
+        final CallContext context = new AdyenCallContext(clock.getUTCNow(), getKbTenantId());
+        final AdyenResponsesRecord adyenResponsesRecord = adyenDao.getSuccessfulAuthorizationResponse(getKbPaymentId(), getKbTenantId());
+
+        if (adyenResponsesRecord == null) {
             throw new PaymentPluginApiException(null, "Unable to retrieve previous payment response for kbPaymentTransactionId " + getKbPaymentTransactionId());
         }
 
-        if (previousResponse.getKbPaymentTransactionId() != getKbPaymentTransactionId()) {
-            // the payment has already advanced, so nothing to do
+        if (adyenResponsesRecord.getKbPaymentTransactionId() != getKbPaymentTransactionId()) {
             return;
         }
-        if (previousResponse.getResultCode() != "IdentifyShopper") {
-            // we are not actually in identify, so nothing to do
+        if (adyenResponsesRecord.getResultCode() != "IdentifyShopper") {
             return;
         }
-        // TODO: send threeDSCompInd = N to adyen and mark the payment as failed
-//        final PurchaseResult failureResult = new PurchaseResult(getKbPaymentTransactionExternalKey(), adyenCall);
-//        adyenDao.addResponse();
+
+        if(adyenResponsesRecord != null) {
+
+            final List<PluginProperty> propertiesWithCompInd = PluginProperties.buildPluginProperties(ImmutableMap.of(PROPERTY_THREEDS_COMP_IND, "Y"));
+
+            UUID kbAccountId = UUID.fromString(adyenResponsesRecord.getKbAccountId());
+            adyenPaymentPluginApi.authorizePayment(kbAccountId,
+                    getKbPaymentId(),
+                    UUID.fromString(getKbPaymentTransactionId()),
+                    getKbPaymentMethodId(),
+                    adyenResponsesRecord.getAmount(),
+                    Currency.fromCode(adyenResponsesRecord.getCurrency()),
+                    propertiesWithCompInd,
+                    context);
+
+        }
+
     }
 }
